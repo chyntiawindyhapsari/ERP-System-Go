@@ -1,0 +1,12 @@
+# Binary
+*.exe
+first-project
+!first-project/
+
+# Environment (berisi password, jangan di-commit)
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manajemen Produk</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #ffffff; --text: #1f2430; --muted: #6b7280;
+    --line: #e5e7eb; --primary: #2563eb; --primary-dark: #1d4ed8;
+    --danger: #dc2626; --ok: #16a34a; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1218; --card: #181c25; --text: #e8eaf0; --muted: #9aa3b2; --line: #2a3040; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  h1 { margin: 0; font-size: 1.5rem; }
+  .sub { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .toolbar { display: flex; gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  input, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; width: 100%; }
+  input:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+  .toolbar input { flex: 1; min-width: 180px; width: auto; }
+  button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 9px 16px; background: var(--primary); color: #fff; }
+  button:hover { background: var(--primary-dark); }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  button.ghost:hover { background: var(--bg); }
+  button.danger { background: transparent; color: var(--danger); border: 1px solid var(--line); padding: 6px 12px; }
+  button.danger:hover { background: var(--danger); color: #fff; }
+  button.small { padding: 6px 12px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .desc { color: var(--muted); font-size: .88rem; margin-top: 2px; }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 14px; }
+  .pager { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  .pager div { display: flex; gap: 8px; }
+  dialog { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); padding: 0; width: min(440px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.5); }
+  form { padding: 20px; display: grid; gap: 14px; }
+  form h2 { margin: 0; font-size: 1.15rem; }
+  label { display: grid; gap: 5px; font-size: .88rem; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .err { color: var(--danger); font-size: .8rem; min-height: 1em; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 8px; transition: transform .25s; z-index: 10; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  @media (max-width: 640px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Manajemen Produk</h1>
+      <div class="sub" id="summary">Memuat data...</div>
+    </div>
+    <button id="btnAdd">+ Tambah Produk</button>
+  </header>
+
+  <div class="card">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Cari nama produk...">
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="hide-sm">ID</th>
+          <th>Produk</th>
+          <th class="num">Harga</th>
+          <th class="num">Stok</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="pager">
+      <span id="pageInfo"></span>
+      <div>
+        <button class="ghost small" id="prev">Sebelumnya</button>
+        <button class="ghost small" id="next">Berikutnya</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form id="form" novalidate>
+    <h2 id="dlgTitle">Tambah Produk</h2>
+    <label>Nama
+      <input name="name" maxlength="100" autocomplete="off">
+      <span class="err" data-for="name"></span>
+    </label>
+    <label>Deskripsi
+      <textarea name="description" rows="3" maxlength="500"></textarea>
+      <span class="err" data-for="description"></span>
+    </label>
+    <div class="row">
+      <label>Harga (Rp)
+        <input name="price" type="number" min="1" step="1">
+        <span class="err" data-for="price"></span>
+      </label>
+      <label>Stok
+        <input name="stock" type="number" min="0" step="1" value="0">
+        <span class="err" data-for="stock"></span>
+      </label>
+    </div>
+    <div class="err" id="formErr"></div>
+    <div class="form-actions">
+      <button type="button" class="ghost" id="btnCancel">Batal</button>
+      <button type="submit">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+const API = '/api/v1/products';
+const state = { page: 1, limit: 5, search: '', totalPages: 1 };
+const $ = (s) => document.querySelector(s);
+const rupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+
+let editingId = null;
+let toastTimer;
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+async function api(url, opts) {
+  const res = await fetch(url, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.message || 'Terjadi kesalahan');
+    err.fields = body.errors || {};
+    throw err;
+  }
+  return body;
+}
+
+async function load() {
+  const q = new URLSearchParams({ page: state.page, limit: state.limit });
+  if (state.search) q.set('search', state.search);
+  try {
+    const { data, meta } = await api(`${API}?${q}`);
+    render(data || [], meta);
+  } catch (e) {
+    $('#summary').textContent = 'Gagal memuat data: ' + e.message;
+  }
+}
+
+function cell(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  if (cls) el.className = cls;
+  return el;
+}
+
+function render(items, meta) {
+  state.totalPages = Math.max(meta.total_pages, 1);
+  $('#summary').textContent = `${meta.total} produk tersimpan`;
+  $('#pageInfo').textContent = `Halaman ${meta.page} dari ${state.totalPages}`;
+  $('#prev').disabled = meta.page <= 1;
+  $('#next').disabled = meta.page >= state.totalPages;
+
+  const tbody = $('#rows');
+  tbody.replaceChildren();
+
+  if (items.length === 0) {
+    const tr = document.createElement('tr');
+    const td = cell('td', 'Belum ada produk.', 'empty');
+    td.colSpan = 5;
+    tr.append(td);
+    tbody.append(tr);
+    return;
+  }
+
+  for (const p of items) {
+    const tr = document.createElement('tr');
+
+    const name = document.createElement('td');
+    name.append(cell('div', p.name));
+    if (p.description) name.append(cell('div', p.description, 'desc'));
+
+    const actions = document.createElement('td');
+    actions.className = 'actions';
+    const edit = cell('button', 'Edit', 'ghost small');
+    edit.addEventListener('click', () => openForm(p));
+    const del = cell('button', 'Hapus', 'danger');
+    del.addEventListener('click', () => remove(p));
+    actions.append(edit, del);
+
+    tr.append(cell('td', p.id, 'hide-sm'), name, cell('td', rupiah(p.price), 'num'), cell('td', p.stock, 'num'), actions);
+    tbody.append(tr);
+  }
+}
+
+function clearErrors() {
+  document.querySelectorAll('.err').forEach((e) => (e.textContent = ''));
+}
+
+function openForm(product) {
+  editingId = product ? product.id : null;
+  clearErrors();
+  const f = $('#form');
+  $('#dlgTitle').textContent = product ? 'Edit Produk' : 'Tambah Produk';
+  f.name.value = product ? product.name : '';
+  f.description.value = product ? product.description : '';
+  f.price.value = product ? product.price : '';
+  f.stock.value = product ? product.stock : 0;
+  $('#dlg').showModal();
+  f.name.focus();
+}
+
+async function remove(p) {
+  if (!confirm(`Hapus produk "${p.name}"?`)) return;
+  try {
+    await api(`${API}/${p.id}`, { method: 'DELETE' });
+    toast('Produk dihapus');
+    if ($('#rows').children.length === 1 && state.page > 1) state.page--;
+    load();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+$('#form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  clearErrors();
+  const f = ev.target;
+  const payload = {
+    name: f.name.value,
+    description: f.description.value,
+    price: Number(f.price.value),
+    stock: Number(f.stock.value),
+  };
+  const url = editingId ? `${API}/${editingId}` : API;
+  try {
+    await api(url, {
+      method: editingId ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    $('#dlg').close();
+    toast(editingId ? 'Produk diperbarui' : 'Produk ditambahkan');
+    if (!editingId) { state.page = 1; }
+    load();
+  } catch (e) {
+    for (const [field, msg] of Object.entries(e.fields || {})) {
+      const el = document.querySelector(`.err[data-for="${field}"]`);
+      if (el) el.textContent = msg;
+    }
+    if (!Object.keys(e.fields || {}).length) $('#formErr').textContent = e.message;
+  }
+});
+
+$('#btnAdd').addEventListener('click', () => openForm(null));
+$('#btnCancel').addEventListener('click', () => $('#dlg').close());
+$('#prev').addEventListener('click', () => { state.page--; load(); });
+$('#next').addEventListener('click', () => { state.page++; load(); });
+
+let searchTimer;
+$('#search').addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.search = e.target.value.trim(); state.page = 1; load(); }, 300);
+});
+
+load();
+</script>
+</body>
+</html>

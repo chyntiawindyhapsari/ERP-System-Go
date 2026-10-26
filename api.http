@@ -1,0 +1,51 @@
+### Tes API memakai ekstensi "REST Client" (humao.rest-client) di VS Code.
+### Klik "Send Request" yang muncul di atas tiap request.
+
+@baseUrl = http://localhost:8080
+
+### Health check
+GET {{baseUrl}}/health
+
+### Buat produk baru
+POST {{baseUrl}}/api/v1/products
+Content-Type: application/json
+
+{
+  "name": "Headset Gaming",
+  "description": "Headset 7.1 surround dengan mic",
+  "price": 350000,
+  "stock": 15
+}
+
+### Daftar produk (dengan pagination)
+GET {{baseUrl}}/api/v1/products?page=1&limit=5
+
+### Cari produk berdasarkan nama
+GET {{baseUrl}}/api/v1/products?search=mouse
+
+### Detail produk
+GET {{baseUrl}}/api/v1/products/1
+
+### Update produk
+PUT {{baseUrl}}/api/v1/products/1
+Content-Type: application/json
+
+{
+  "name": "Keyboard Mekanik RGB",
+  "description": "Keyboard mekanik 75% dengan lampu RGB",
+  "price": 550000,
+  "stock": 20
+}
+
+### Hapus produk
+DELETE {{baseUrl}}/api/v1/products/1
+
+### Tes validasi (harus 422)
+POST {{baseUrl}}/api/v1/products
+Content-Type: application/json
+
+{
+  "name": "ab",
+  "price": 0,
+  "stock": -1
+}
