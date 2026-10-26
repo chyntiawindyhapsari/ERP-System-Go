@@ -1,12 +1,31 @@
-# Binary
+# Binaries for programs and plugins
 *.exe
-first-project
-!first-project/
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+!coverage.go
+*.coverprofile
+profile.cov
+
+# Go workspace file
+go.work
+go.work.sum
 
 # Environment (berisi password, jangan di-commit)
 .env
 
-# IDE / OS
+# Custom Project Rules
+first-project/
+
+# IDE / Editor / OS
 .vscode/
 .idea/
 .DS_Store
