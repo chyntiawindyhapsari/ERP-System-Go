@@ -1,12 +1,19 @@
+
 package middleware
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// statusRecorder membungkus ResponseWriter agar status code bisa dicatat.
+const SessionCookieName = "erp_session"
+
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
@@ -17,7 +24,6 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
-// Logger mencatat method, path, status, dan durasi setiap request.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -27,30 +33,72 @@ func Logger(next http.Handler) http.Handler {
 	})
 }
 
-// Recover mencegah server mati jika terjadi panic di handler.
 func Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("PANIC: %v", err)
-				http.Error(w, `{"success":false,"message":"terjadi kesalahan pada server"}`, http.StatusInternalServerError)
+				http.Error(w, `{"success":false,"message":"terjadi kesalahan pada server"}`,
+					http.StatusInternalServerError)
 			}
 		}()
 		next.ServeHTTP(w, r)
 	})
 }
 
-// CORS mengizinkan frontend (misal React di localhost:3000) memanggil API ini.
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Frontend berada di origin yang sama dengan API.
+		w.Header().Set("Access-Control-Allow-Origin", "")
+		w.Header().Set("Vary", "Origin")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+func RequireSession(pool *pgxpool.Pool, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+
+		cookie, err := r.Cookie(SessionCookieName)
+		if err != nil || cookie.Value == "" {
+			unauthorized(w)
+			return
+		}
+
+		sum := sha256.Sum256([]byte(cookie.Value))
+		tokenHash := hex.EncodeToString(sum[:])
+
+		var valid bool
+		err = pool.QueryRow(r.Context(), `
+			SELECT EXISTS (
+				SELECT 1
+				FROM user_sessions s
+				JOIN users u ON u.id = s.user_id
+				WHERE s.token_hash = $1
+				  AND s.expires_at > NOW()
+				  AND u.is_active = TRUE
+			)
+		`, tokenHash).Scan(&valid)
+
+		if err != nil || !valid {
+			unauthorized(w)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func unauthorized(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"success": false,
+		"message": "Sesi tidak valid. Silakan login kembali.",
 	})
 }

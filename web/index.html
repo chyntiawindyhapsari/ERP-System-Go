@@ -1,283 +1,1334 @@
+
 <!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Manajemen Produk</title>
+<title>ERP Mini</title>
 <style>
   :root {
-    --bg: #f5f6fa; --card: #ffffff; --text: #1f2430; --muted: #6b7280;
-    --line: #e5e7eb; --primary: #2563eb; --primary-dark: #1d4ed8;
-    --danger: #dc2626; --ok: #16a34a; --radius: 12px;
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --text: #1f2430;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --danger: #dc2626;
+    --ok: #16a34a;
+    --radius: 12px;
   }
+
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1218; --card: #181c25; --text: #e8eaf0; --muted: #9aa3b2; --line: #2a3040; }
+    :root {
+      --bg: #0f1218;
+      --card: #181c25;
+      --text: #e8eaf0;
+      --muted: #9aa3b2;
+      --line: #2a3040;
+    }
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-  h1 { margin: 0; font-size: 1.5rem; }
-  .sub { color: var(--muted); font-size: .9rem; margin-top: 2px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-  .toolbar { display: flex; gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-  input, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; width: 100%; }
-  input:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
-  .toolbar input { flex: 1; min-width: 180px; width: auto; }
-  button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 9px 16px; background: var(--primary); color: #fff; }
-  button:hover { background: var(--primary-dark); }
-  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
-  button.ghost:hover { background: var(--bg); }
-  button.danger { background: transparent; color: var(--danger); border: 1px solid var(--line); padding: 6px 12px; }
-  button.danger:hover { background: var(--danger); color: #fff; }
-  button.small { padding: 6px 12px; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-  tr:last-child td { border-bottom: 0; }
-  td.num, th.num { text-align: right; white-space: nowrap; }
-  .desc { color: var(--muted); font-size: .88rem; margin-top: 2px; }
-  .actions { display: flex; gap: 6px; justify-content: flex-end; }
-  .empty { text-align: center; color: var(--muted); padding: 40px 14px; }
-  .pager { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
-  .pager div { display: flex; gap: 8px; }
-  dialog { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); padding: 0; width: min(440px, 92vw); }
-  dialog::backdrop { background: rgba(0,0,0,.5); }
-  form { padding: 20px; display: grid; gap: 14px; }
-  form h2 { margin: 0; font-size: 1.15rem; }
-  label { display: grid; gap: 5px; font-size: .88rem; color: var(--muted); }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .err { color: var(--danger); font-size: .8rem; min-height: 1em; }
-  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 8px; transition: transform .25s; z-index: 10; }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-  @media (max-width: 640px) { .hide-sm { display: none; } }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 1.2rem;
+  }
+
+  p {
+    line-height: 1.6;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 16px;
+    background: var(--primary);
+    color: #fff;
+  }
+
+  button:hover {
+    background: var(--primary-dark);
+  }
+
+  button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  button.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line);
+  }
+
+  button.ghost:hover {
+    background: var(--bg);
+  }
+
+  button.danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+  }
+
+  button.danger:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  button.small {
+    padding: 6px 12px;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+
+  label {
+    display: grid;
+    gap: 5px;
+    font-size: .88rem;
+    color: var(--muted);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: .9rem;
+    margin-top: 4px;
+  }
+
+  .err {
+    color: var(--danger);
+    font-size: .82rem;
+    min-height: 1em;
+  }
+
+  /* Login */
+
+  .login-screen {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+  }
+
+  .login-card {
+    width: min(420px, 100%);
+    padding: 28px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+
+  .login-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    font-weight: 800;
+    font-size: 1.2rem;
+  }
+
+  .login-card form {
+    display: grid;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .login-card button[type="submit"] {
+    width: 100%;
+  }
+
+  /* Layout */
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    background: var(--card);
+    border-right: 1px solid var(--line);
+    padding: 22px 14px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 0 10px 28px;
+  }
+
+  .brand .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .nav-label {
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 12px 10px 8px;
+  }
+
+  .nav-list {
+    display: grid;
+    gap: 5px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 11px 12px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: var(--bg);
+    color: var(--primary);
+  }
+
+  .nav-item.active {
+    border-color: var(--line);
+    font-weight: 600;
+  }
+
+  .nav-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    font-size: 1rem;
+  }
+
+  .sidebar-footer {
+    margin-top: 30px;
+    padding: 14px 10px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .8rem;
+  }
+
+  .main {
+    min-width: 0;
+    padding: 24px;
+  }
+
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Product */
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+
+  .toolbar input {
+    flex: 1;
+    min-width: 180px;
+    width: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  th {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted);
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  td.num,
+  th.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .desc {
+    color: var(--muted);
+    font-size: .88rem;
+    margin-top: 3px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 14px;
+  }
+
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .9rem;
+  }
+
+  .pager div {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ERP modules */
+
+  .module-placeholder {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .module-description {
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .module-card {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+  }
+
+  .module-card strong {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .module-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+
+  .module-notice {
+    margin-top: 22px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+
+  /* Dialog */
+
+  dialog {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text);
+    padding: 0;
+    width: min(440px, 92vw);
+  }
+
+  dialog::backdrop {
+    background: rgba(0, 0, 0, .5);
+  }
+
+  form.product-form {
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+
+  form h2 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  #toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 8px;
+    transition: transform .25s;
+    z-index: 10;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  #toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    .module-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .app-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      border-right: 0;
+      border-bottom: 1px solid var(--line);
+      padding: 14px;
+    }
+
+    .brand {
+      padding-bottom: 10px;
+    }
+
+    .nav-label,
+    .sidebar-footer {
+      display: none;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .nav-item {
+      width: auto;
+      flex: 1 1 auto;
+    }
+
+    .main {
+      padding: 16px;
+    }
+
+    .hide-sm {
+      display: none;
+    }
+
+    .pager {
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .topbar {
+      align-items: flex-start;
+    }
+
+    .actions {
+      flex-wrap: wrap;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+    }
+  }
 </style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Manajemen Produk</h1>
-      <div class="sub" id="summary">Memuat data...</div>
-    </div>
-    <button id="btnAdd">+ Tambah Produk</button>
-  </header>
 
-  <div class="card">
-    <div class="toolbar">
-      <input id="search" type="search" placeholder="Cari nama produk...">
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th class="hide-sm">ID</th>
-          <th>Produk</th>
-          <th class="num">Harga</th>
-          <th class="num">Stok</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <div class="pager">
-      <span id="pageInfo"></span>
+<body>
+
+<section id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-icon">E</div>
       <div>
-        <button class="ghost small" id="prev">Sebelumnya</button>
-        <button class="ghost small" id="next">Berikutnya</button>
+        <h1>ERP Mini</h1>
+        <div class="sub">Enterprise Resource Planning</div>
       </div>
     </div>
+
+    <h2>Selamat datang</h2>
+    <p class="sub">Masuk untuk melanjutkan ke dashboard ERP.</p>
+
+    <form id="loginForm">
+      <label>
+        Username
+        <input
+          name="username"
+          type="text"
+          autocomplete="username"
+          maxlength="50"
+          required
+        >
+      </label>
+
+      <label>
+        Password
+        <input
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+      </label>
+
+      <div id="loginError" class="err" role="alert"></div>
+
+      <button id="btnLogin" type="submit">Masuk</button>
+    </form>
   </div>
+</section>
+
+<div id="appScreen" class="app-shell hidden">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">E</div>
+      <span>ERP Mini</span>
+    </div>
+
+    <div class="nav-label">Menu utama</div>
+
+    <nav class="nav-list">
+      <button
+        type="button"
+        class="nav-item active"
+        data-page="products"
+      >
+        <span class="nav-icon">▣</span>
+        Manajemen Produk
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="inventory"
+      >
+        <span class="nav-icon">▤</span>
+        Persediaan Barang
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="suppliers"
+      >
+        <span class="nav-icon">♧</span>
+        Data Supplier
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      ERP Mini<br>
+      Sistem Manajemen Operasional
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Manajemen Produk</h1>
+        <div id="summary" class="sub">Memuat data...</div>
+        <div id="welcomeUser" class="sub"></div>
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" id="btnLogout" class="ghost">
+          Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- MANAJEMEN PRODUK -->
+
+    <section id="productsPage">
+      <div class="card">
+
+        <div class="toolbar">
+          <input
+            id="search"
+            type="search"
+            placeholder="Cari nama produk..."
+            aria-label="Cari nama produk"
+          >
+
+          <button type="button" id="btnAdd">
+            + Tambah Produk
+          </button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="hide-sm">ID</th>
+              <th>Produk</th>
+              <th class="num">Harga</th>
+              <th class="num">Stok</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody id="rows">
+            <tr>
+              <td colspan="5" class="empty">Memuat data...</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pager">
+          <span id="pageInfo">Halaman 1</span>
+
+          <div>
+            <button type="button" class="ghost small" id="prev">
+              Sebelumnya
+            </button>
+
+            <button type="button" class="ghost small" id="next">
+              Berikutnya
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PERSEDIAAN BARANG -->
+
+    <section id="inventoryPage" class="hidden">
+      <div class="module-placeholder">
+        <h2>Persediaan Barang</h2>
+
+        <p class="module-description">
+          Modul untuk memantau ketersediaan dan pergerakan barang
+          dalam operasional perusahaan.
+        </p>
+
+        <div class="module-grid">
+          <div class="module-card">
+            <strong>Stok Barang</strong>
+            <p>Informasi jumlah stok setiap barang.</p>
+          </div>
+
+          <div class="module-card">
+            <strong>Barang Masuk</strong>
+            <p>Pencatatan penerimaan barang dari pemasok.</p>
+          </div>
+
+          <div class="module-card">
+            <strong>Barang Keluar</strong>
+            <p>Pencatatan pengeluaran barang dari persediaan.</p>
+          </div>
+        </div>
+
+        <div class="module-notice">
+          Halaman ini merupakan rancangan awal. Data persediaan
+          dan transaksi stok belum terhubung ke database.
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA SUPPLIER -->
+
+    <section id="suppliersPage" class="hidden">
+      <div class="module-placeholder">
+        <h2>Data Supplier</h2>
+
+        <p class="module-description">
+          Modul untuk mengelola informasi pemasok yang mendukung
+          proses pengadaan barang perusahaan.
+        </p>
+
+        <div class="module-grid">
+          <div class="module-card">
+            <strong>Informasi Supplier</strong>
+            <p>Nama perusahaan dan identitas pemasok.</p>
+          </div>
+
+          <div class="module-card">
+            <strong>Kontak Supplier</strong>
+            <p>Alamat, nomor telepon, dan email pemasok.</p>
+          </div>
+
+          <div class="module-card">
+            <strong>Riwayat Pembelian</strong>
+            <p>Informasi transaksi pembelian dari pemasok.</p>
+          </div>
+        </div>
+
+        <div class="module-notice">
+          Halaman ini merupakan rancangan awal. Data supplier
+          dan transaksi pembelian belum terhubung ke database.
+        </div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
+<!-- FORM TAMBAH DAN EDIT PRODUK -->
+
 <dialog id="dlg">
-  <form id="form" novalidate>
+  <form id="form" class="product-form" novalidate>
     <h2 id="dlgTitle">Tambah Produk</h2>
-    <label>Nama
-      <input name="name" maxlength="100" autocomplete="off">
+
+    <label>
+      Nama
+      <input name="name" maxlength="100" autocomplete="off" required>
       <span class="err" data-for="name"></span>
     </label>
-    <label>Deskripsi
+
+    <label>
+      Deskripsi
       <textarea name="description" rows="3" maxlength="500"></textarea>
       <span class="err" data-for="description"></span>
     </label>
-    <div class="row">
-      <label>Harga (Rp)
-        <input name="price" type="number" min="1" step="1">
+
+    <div class="form-row">
+      <label>
+        Harga (Rp)
+        <input name="price" type="number" min="0" step="1" required>
         <span class="err" data-for="price"></span>
       </label>
-      <label>Stok
-        <input name="stock" type="number" min="0" step="1" value="0">
+
+      <label>
+        Stok
+        <input name="stock" type="number" min="0" step="1" value="0" required>
         <span class="err" data-for="stock"></span>
       </label>
     </div>
-    <div class="err" id="formErr"></div>
+
+    <div class="err" id="formErr" role="alert"></div>
+
     <div class="form-actions">
-      <button type="button" class="ghost" id="btnCancel">Batal</button>
-      <button type="submit">Simpan</button>
+      <button type="button" class="ghost" id="btnCancel">
+        Batal
+      </button>
+
+      <button type="submit" id="btnSave">
+        Simpan
+      </button>
     </div>
   </form>
 </dialog>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const API = '/api/v1/products';
-const state = { page: 1, limit: 5, search: '', totalPages: 1 };
-const $ = (s) => document.querySelector(s);
-const rupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+const AUTH_API = '/api/v1/auth';
+
+const state = {
+  page: 1,
+  limit: 5,
+  search: '',
+  totalPages: 1,
+  user: null,
+};
+
+const $ = (selector) => document.querySelector(selector);
+
+const rupiah = (value) =>
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(value);
 
 let editingId = null;
 let toastTimer;
+let searchTimer;
 
-function toast(msg) {
-  const el = $('#toast');
-  el.textContent = msg;
-  el.classList.add('show');
+function toast(message) {
+  const element = $('#toast');
+
+  element.textContent = message;
+  element.classList.add('show');
+
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+
+  toastTimer = setTimeout(() => {
+    element.classList.remove('show');
+  }, 2500);
 }
 
-async function api(url, opts) {
-  const res = await fetch(url, opts);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const err = new Error(body.message || 'Terjadi kesalahan');
-    err.fields = body.errors || {};
-    throw err;
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    credentials: 'same-origin',
+    headers: {
+      ...(options.headers || {}),
+    },
+  });
+
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(
+      body.message || 'Terjadi kesalahan pada server.'
+    );
+
+    error.status = response.status;
+    error.fields = body.errors || {};
+
+    throw error;
   }
+
   return body;
 }
 
-async function load() {
-  const q = new URLSearchParams({ page: state.page, limit: state.limit });
-  if (state.search) q.set('search', state.search);
+function showLogin() {
+  state.user = null;
+
+  $('#loginScreen').classList.remove('hidden');
+  $('#appScreen').classList.add('hidden');
+
+  $('#loginError').textContent = '';
+}
+
+async function showApp(user) {
+  state.user = user;
+
+  $('#loginScreen').classList.add('hidden');
+  $('#appScreen').classList.remove('hidden');
+
+  $('#welcomeUser').textContent =
+    `Login sebagai ${user.full_name || user.username}`;
+
+  await load();
+}
+
+async function initializeApp() {
   try {
-    const { data, meta } = await api(`${API}?${q}`);
-    render(data || [], meta);
-  } catch (e) {
-    $('#summary').textContent = 'Gagal memuat data: ' + e.message;
+    const result = await api(`${AUTH_API}/me`);
+
+    await showApp(result.data);
+  } catch {
+    showLogin();
   }
 }
 
-function cell(tag, text, cls) {
-  const el = document.createElement(tag);
-  el.textContent = text;
-  if (cls) el.className = cls;
-  return el;
-}
+$('#loginForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-function render(items, meta) {
-  state.totalPages = Math.max(meta.total_pages, 1);
-  $('#summary').textContent = `${meta.total} produk tersimpan`;
-  $('#pageInfo').textContent = `Halaman ${meta.page} dari ${state.totalPages}`;
-  $('#prev').disabled = meta.page <= 1;
-  $('#next').disabled = meta.page >= state.totalPages;
+  const form = event.currentTarget;
+  const button = $('#btnLogin');
+  const errorElement = $('#loginError');
 
-  const tbody = $('#rows');
-  tbody.replaceChildren();
+  errorElement.textContent = '';
+  button.disabled = true;
+  button.textContent = 'Memproses...';
 
-  if (items.length === 0) {
-    const tr = document.createElement('tr');
-    const td = cell('td', 'Belum ada produk.', 'empty');
-    td.colSpan = 5;
-    tr.append(td);
-    tbody.append(tr);
+  try {
+    const result = await api(`${AUTH_API}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: form.elements.username.value.trim(),
+        password: form.elements.password.value,
+      }),
+    });
+
+    form.elements.password.value = '';
+
+    await showApp(result.data);
+  } catch (error) {
+    errorElement.textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Masuk';
+  }
+});
+
+$('#btnLogout').addEventListener('click', async () => {
+  const button = $('#btnLogout');
+
+  button.disabled = true;
+
+  try {
+    await api(`${AUTH_API}/logout`, {
+      method: 'POST',
+    });
+
+    $('#loginForm').reset();
+    showLogin();
+  } catch (error) {
+    if (error.status === 401) {
+      $('#loginForm').reset();
+      showLogin();
+    } else {
+      toast('Logout gagal. Periksa koneksi server.');
+    }
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function setPage(page) {
+  const pages = {
+    products: ['productsPage', 'Manajemen Produk'],
+    inventory: ['inventoryPage', 'Persediaan Barang'],
+    suppliers: ['suppliersPage', 'Data Supplier'],
+  };
+
+  const selected = pages[page];
+
+  if (!selected) {
     return;
   }
 
-  for (const p of items) {
-    const tr = document.createElement('tr');
+  document.querySelectorAll('[data-page]').forEach((button) => {
+    button.classList.toggle(
+      'active',
+      button.dataset.page === page
+    );
+  });
 
-    const name = document.createElement('td');
-    name.append(cell('div', p.name));
-    if (p.description) name.append(cell('div', p.description, 'desc'));
+  Object.values(pages).forEach(([id]) => {
+    $('#' + id).classList.add('hidden');
+  });
 
-    const actions = document.createElement('td');
-    actions.className = 'actions';
-    const edit = cell('button', 'Edit', 'ghost small');
-    edit.addEventListener('click', () => openForm(p));
-    const del = cell('button', 'Hapus', 'danger');
-    del.addEventListener('click', () => remove(p));
-    actions.append(edit, del);
+  const [pageId, title] = selected;
 
-    tr.append(cell('td', p.id, 'hide-sm'), name, cell('td', rupiah(p.price), 'num'), cell('td', p.stock, 'num'), actions);
-    tbody.append(tr);
+  $('#' + pageId).classList.remove('hidden');
+  $('#pageTitle').textContent = title;
+
+  if (page === 'products') {
+    $('#summary').textContent = 'Kelola katalog produk';
+  } else {
+    $('#summary').textContent = 'Modul ERP';
+  }
+}
+
+document.querySelectorAll('[data-page]').forEach((button) => {
+  button.addEventListener('click', () => {
+    setPage(button.dataset.page);
+  });
+});
+
+async function load() {
+  const query = new URLSearchParams({
+    page: String(state.page),
+    limit: String(state.limit),
+  });
+
+  if (state.search) {
+    query.set('search', state.search);
+  }
+
+  try {
+    const result = await api(`${API}?${query}`);
+
+    render(result.data || [], result.meta || {});
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+
+    $('#summary').textContent =
+      'Gagal memuat data: ' + error.message;
+
+    $('#rows').replaceChildren();
+
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+
+    cell.colSpan = 5;
+    cell.className = 'empty';
+    cell.textContent = 'Data produk gagal dimuat.';
+
+    row.append(cell);
+    $('#rows').append(row);
+  }
+}
+
+function cell(tag, text, className) {
+  const element = document.createElement(tag);
+
+  element.textContent = text ?? '';
+
+  if (className) {
+    element.className = className;
+  }
+
+  return element;
+}
+
+function render(items, meta) {
+  const page = Number(meta.page) || state.page;
+  const limit = Number(meta.limit) || state.limit;
+  const total = Number(meta.total) || 0;
+  const totalPages = Number(meta.total_pages) || 0;
+
+  state.page = page;
+  state.totalPages = Math.max(totalPages, 1);
+
+  $('#summary').textContent = `${total} produk tersimpan`;
+  $('#pageInfo').textContent =
+    `Halaman ${page} dari ${state.totalPages}`;
+
+  $('#prev').disabled = page <= 1;
+  $('#next').disabled = page >= state.totalPages;
+
+  const tbody = $('#rows');
+
+  tbody.replaceChildren();
+
+  if (items.length === 0) {
+    const row = document.createElement('tr');
+    const emptyCell = cell('td', 'Belum ada produk.', 'empty');
+
+    emptyCell.colSpan = 5;
+    row.append(emptyCell);
+    tbody.append(row);
+
+    return;
+  }
+
+  for (const product of items) {
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+
+    nameCell.append(cell('div', product.name));
+
+    if (product.description) {
+      nameCell.append(
+        cell('div', product.description, 'desc')
+      );
+    }
+
+    const actions = cell('td', '', 'actions');
+
+    const editButton = cell(
+      'button',
+      'Edit',
+      'ghost small'
+    );
+
+    editButton.type = 'button';
+    editButton.addEventListener('click', () => {
+      openForm(product);
+    });
+
+    const deleteButton = cell(
+      'button',
+      'Hapus',
+      'danger'
+    );
+
+    deleteButton.type = 'button';
+    deleteButton.addEventListener('click', () => {
+      removeProduct(product);
+    });
+
+    actions.append(editButton, deleteButton);
+
+    row.append(
+      cell('td', product.id, 'hide-sm'),
+      nameCell,
+      cell('td', rupiah(product.price), 'num'),
+      cell('td', product.stock, 'num'),
+      actions
+    );
+
+    tbody.append(row);
   }
 }
 
 function clearErrors() {
-  document.querySelectorAll('.err').forEach((e) => (e.textContent = ''));
+  document.querySelectorAll('.err').forEach((element) => {
+    element.textContent = '';
+  });
 }
 
 function openForm(product) {
   editingId = product ? product.id : null;
+
   clearErrors();
-  const f = $('#form');
-  $('#dlgTitle').textContent = product ? 'Edit Produk' : 'Tambah Produk';
-  f.name.value = product ? product.name : '';
-  f.description.value = product ? product.description : '';
-  f.price.value = product ? product.price : '';
-  f.stock.value = product ? product.stock : 0;
+
+  const form = $('#form');
+
+  $('#dlgTitle').textContent =
+    product ? 'Edit Produk' : 'Tambah Produk';
+
+  form.elements.name.value = product ? product.name : '';
+  form.elements.description.value =
+    product ? product.description : '';
+  form.elements.price.value = product ? product.price : '';
+  form.elements.stock.value = product ? product.stock : 0;
+
   $('#dlg').showModal();
-  f.name.focus();
+  form.elements.name.focus();
 }
 
-async function remove(p) {
-  if (!confirm(`Hapus produk "${p.name}"?`)) return;
+async function removeProduct(product) {
+  if (!confirm(`Hapus produk "${product.name}"?`)) {
+    return;
+  }
+
   try {
-    await api(`${API}/${p.id}`, { method: 'DELETE' });
-    toast('Produk dihapus');
-    if ($('#rows').children.length === 1 && state.page > 1) state.page--;
-    load();
-  } catch (e) {
-    toast(e.message);
+    await api(`${API}/${product.id}`, {
+      method: 'DELETE',
+    });
+
+    toast('Produk berhasil dihapus');
+
+    if ($('#rows').children.length === 1 && state.page > 1) {
+      state.page--;
+    }
+
+    await load();
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+
+    toast(error.message);
   }
 }
 
-$('#form').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
+$('#form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
   clearErrors();
-  const f = ev.target;
+
+  const form = event.currentTarget;
+  const button = $('#btnSave');
+
+  const price = Number(form.elements.price.value);
+  const stock = Number(form.elements.stock.value);
+
+  if (
+    !form.elements.name.value.trim() ||
+    !Number.isSafeInteger(price) ||
+    price < 0 ||
+    !Number.isSafeInteger(stock) ||
+    stock < 0
+  ) {
+    $('#formErr').textContent =
+      'Nama, harga, atau stok tidak valid.';
+    return;
+  }
+
   const payload = {
-    name: f.name.value,
-    description: f.description.value,
-    price: Number(f.price.value),
-    stock: Number(f.stock.value),
+    name: form.elements.name.value.trim(),
+    description: form.elements.description.value.trim(),
+    price,
+    stock,
   };
-  const url = editingId ? `${API}/${editingId}` : API;
+
+  const isEditing = editingId !== null;
+  const url = isEditing ? `${API}/${editingId}` : API;
+
+  button.disabled = true;
+  button.textContent = 'Menyimpan...';
+
   try {
     await api(url, {
-      method: editingId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: isEditing ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(payload),
     });
+
     $('#dlg').close();
-    toast(editingId ? 'Produk diperbarui' : 'Produk ditambahkan');
-    if (!editingId) { state.page = 1; }
-    load();
-  } catch (e) {
-    for (const [field, msg] of Object.entries(e.fields || {})) {
-      const el = document.querySelector(`.err[data-for="${field}"]`);
-      if (el) el.textContent = msg;
+
+    toast(
+      isEditing
+        ? 'Produk berhasil diperbarui'
+        : 'Produk berhasil ditambahkan'
+    );
+
+    if (!isEditing) {
+      state.page = 1;
     }
-    if (!Object.keys(e.fields || {}).length) $('#formErr').textContent = e.message;
+
+    await load();
+  } catch (error) {
+    if (error.status === 401) {
+      $('#dlg').close();
+      showLogin();
+      return;
+    }
+
+    for (const [field, message] of Object.entries(
+      error.fields || {}
+    )) {
+      const element = document.querySelector(
+        `.err[data-for="${field}"]`
+      );
+
+      if (element) {
+        element.textContent = message;
+      }
+    }
+
+    if (!Object.keys(error.fields || {}).length) {
+      $('#formErr').textContent = error.message;
+    }
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Simpan';
   }
 });
 
-$('#btnAdd').addEventListener('click', () => openForm(null));
-$('#btnCancel').addEventListener('click', () => $('#dlg').close());
-$('#prev').addEventListener('click', () => { state.page--; load(); });
-$('#next').addEventListener('click', () => { state.page++; load(); });
-
-let searchTimer;
-$('#search').addEventListener('input', (e) => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => { state.search = e.target.value.trim(); state.page = 1; load(); }, 300);
+$('#btnAdd').addEventListener('click', () => {
+  openForm(null);
 });
 
-load();
+$('#btnCancel').addEventListener('click', () => {
+  $('#dlg').close();
+});
+
+$('#prev').addEventListener('click', async () => {
+  if (state.page > 1) {
+    state.page--;
+    await load();
+  }
+});
+
+$('#next').addEventListener('click', async () => {
+  if (state.page < state.totalPages) {
+    state.page++;
+    await load();
+  }
+});
+
+$('#search').addEventListener('input', (event) => {
+  clearTimeout(searchTimer);
+
+  searchTimer = setTimeout(async () => {
+    state.search = event.target.value.trim();
+    state.page = 1;
+
+    await load();
+  }, 300);
+});
+
+initializeApp();
 </script>
+
 </body>
 </html>
