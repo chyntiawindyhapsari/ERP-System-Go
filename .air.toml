@@ -1,0 +1,10 @@
+[build]
+  cmd = "go build -o ./tmp/main.exe ."
+  bin = "./tmp/main.exe"
+  include_ext = ["go", "html", "sql"]
+  exclude_dir = ["tmp", ".git"]
+
+[proxy]
+  enabled = true
+  proxy_port = 3000
+  app_port = 8080

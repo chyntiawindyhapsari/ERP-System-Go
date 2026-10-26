@@ -68,7 +68,7 @@ func (r *productRepository) List(ctx context.Context, p models.ListParams) ([]mo
 
 	listQuery := `SELECT ` + productColumns + ` FROM products
 	              WHERE $1::text = '' OR name ILIKE '%' || $1::text || '%'
-	              ORDER BY id DESC
+	              ORDER BY id ASC
 	              LIMIT $2 OFFSET $3`
 	rows, err := r.db.Query(ctx, listQuery, p.Search, p.Limit, p.Offset())
 	if err != nil {

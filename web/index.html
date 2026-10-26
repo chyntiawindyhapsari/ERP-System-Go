@@ -1,642 +1,596 @@
-
 <!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERP Mini</title>
+<script>
+  // Terapkan tema sebelum render agar tidak berkedip.
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
-    --bg: #f5f6fa;
-    --card: #ffffff;
-    --text: #1f2430;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --danger: #dc2626;
-    --ok: #16a34a;
-    --radius: 12px;
+    --bg: #f6f4ef;
+    --surface: #fdfcfa;
+    --sunken: #efece5;
+    --ink: #1d1c19;
+    --ink-2: #57544d;
+    --ink-3: #8b877d;
+    --line: #e4e0d6;
+    --line-strong: #d3cec1;
+    --accent: #1e4a41;
+    --accent-hover: #163a33;
+    --accent-ink: #f6f4ef;
+    --accent-soft: #e3ece8;
+    --brass: #9a7433;
+    --ok: #2f6b4f;
+    --ok-bg: #e2eee7;
+    --warn: #8a5a14;
+    --warn-bg: #f4e8cf;
+    --bad: #a23a2e;
+    --bad-bg: #f4dcd7;
+    --shadow: 0 1px 2px rgba(29, 28, 25, .04), 0 8px 24px -12px rgba(29, 28, 25, .12);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131412;
+    --surface: #1a1b18;
+    --sunken: #21221e;
+    --ink: #ece9e1;
+    --ink-2: #b2aea3;
+    --ink-3: #85827a;
+    --line: #2a2b26;
+    --line-strong: #3a3b34;
+    --accent: #8fc2b2;
+    --accent-hover: #a6d1c3;
+    --accent-ink: #11201c;
+    --accent-soft: #1f2d29;
+    --brass: #c9a35c;
+    --ok: #8cc4a4;
+    --ok-bg: #1e2d25;
+    --warn: #dcb468;
+    --warn-bg: #30291a;
+    --bad: #e08a7e;
+    --bad-bg: #3a2220;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+    color-scheme: dark;
   }
 
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1218;
-      --card: #181c25;
-      --text: #e8eaf0;
-      --muted: #9aa3b2;
-      --line: #2a3040;
+    :root:not([data-theme="light"]) {
+      --bg: #131412;
+      --surface: #1a1b18;
+      --sunken: #21221e;
+      --ink: #ece9e1;
+      --ink-2: #b2aea3;
+      --ink-3: #85827a;
+      --line: #2a2b26;
+      --line-strong: #3a3b34;
+      --accent: #8fc2b2;
+      --accent-hover: #a6d1c3;
+      --accent-ink: #11201c;
+      --accent-soft: #1f2d29;
+      --brass: #c9a35c;
+      --ok: #8cc4a4;
+      --ok-bg: #1e2d25;
+      --warn: #dcb468;
+      --warn-bg: #30291a;
+      --bad: #e08a7e;
+      --bad-bg: #3a2220;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+      color-scheme: dark;
     }
   }
 
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
 
   body {
     margin: 0;
-    font-family: system-ui, "Segoe UI", sans-serif;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
     background: var(--bg);
-    color: var(--text);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
   }
 
-  h1 {
+  h1, h2, h3 {
     margin: 0;
-    font-size: 1.5rem;
+    font-family: var(--serif);
+    font-weight: 500;
+    letter-spacing: -.01em;
   }
 
-  h2 {
-    margin: 0 0 12px;
-    font-size: 1.2rem;
+  p { margin: 0; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  .hidden { display: none !important; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  svg.i {
+    width: 18px; height: 18px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round;
   }
 
-  p {
-    line-height: 1.6;
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
-  button,
-  input,
-  textarea {
-    font: inherit;
-  }
+  /* ---------- Buttons ---------- */
 
-  button {
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     cursor: pointer;
-    border: 0;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
     border-radius: 8px;
     padding: 9px 16px;
-    background: var(--primary);
-    color: #fff;
-  }
-
-  button:hover {
-    background: var(--primary-dark);
-  }
-
-  button:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-  }
-
-  button.ghost {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--line);
-  }
-
-  button.ghost:hover {
-    background: var(--bg);
-  }
-
-  button.danger {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid var(--line);
-    padding: 6px 12px;
-  }
-
-  button.danger:hover {
-    background: var(--danger);
-    color: #fff;
-  }
-
-  button.small {
-    padding: 6px 12px;
-  }
-
-  input,
-  textarea {
-    width: 100%;
-    color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 9px 12px;
-  }
-
-  input:focus,
-  textarea:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: -1px;
-  }
-
-  label {
-    display: grid;
-    gap: 5px;
-    font-size: .88rem;
-    color: var(--muted);
-  }
-
-  .hidden {
-    display: none !important;
-  }
-
-  .sub {
-    color: var(--muted);
+    font-weight: 500;
     font-size: .9rem;
-    margin-top: 4px;
+    transition: background .15s, border-color .15s, color .15s;
   }
+  .btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
 
-  .err {
-    color: var(--danger);
-    font-size: .82rem;
-    min-height: 1em;
+  .btn.ghost {
+    background: transparent; color: var(--ink);
+    border-color: var(--line-strong);
   }
+  .btn.ghost:hover { background: var(--sunken); }
 
-  /* Login */
+  .btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .btn.danger:hover { filter: brightness(.92); }
+
+  .btn.sm { padding: 6px 12px; font-size: .84rem; }
+
+  .icon-btn {
+    display: inline-grid; place-items: center;
+    width: 36px; height: 36px; cursor: pointer;
+    background: transparent; border: 1px solid var(--line-strong);
+    border-radius: 8px; color: var(--ink-2);
+    transition: background .15s, color .15s;
+  }
+  .icon-btn:hover { background: var(--sunken); color: var(--ink); }
+
+  /* ---------- Fields ---------- */
+
+  label.field { display: grid; gap: 6px; font-size: .82rem; font-weight: 500; color: var(--ink-2); }
+
+  .input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .input::placeholder { color: var(--ink-3); }
+  .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  textarea.input { resize: vertical; min-height: 84px; }
+
+  .err { color: var(--bad); font-size: .8rem; min-height: 1.1em; font-weight: 400; }
+
+  .pw-wrap { position: relative; }
+  .pw-wrap .input { padding-right: 64px; }
+  .pw-toggle {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    background: none; border: 0; cursor: pointer;
+    color: var(--ink-3); font-size: .78rem; padding: 6px 8px; border-radius: 6px;
+  }
+  .pw-toggle:hover { color: var(--ink); }
+
+  /* ---------- Login ---------- */
 
   .login-screen {
     min-height: 100vh;
     display: grid;
-    place-items: center;
-    padding: 20px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   }
 
-  .login-card {
-    width: min(420px, 100%);
-    padding: 28px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 16px;
+  .login-aside {
+    background: #17332d;
+    color: #e9e4d6;
+    padding: 56px 64px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
   }
-
-  .login-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
+  .login-aside::after {
+    content: "";
+    position: absolute; right: -140px; bottom: -140px;
+    width: 420px; height: 420px; border-radius: 50%;
+    border: 1px solid rgba(233, 228, 214, .14);
+    box-shadow: 0 0 0 60px rgba(233, 228, 214, .035), 0 0 0 120px rgba(233, 228, 214, .025);
   }
-
-  .brand-icon {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: var(--primary);
-    color: white;
-    font-weight: 800;
-    font-size: 1.2rem;
+  .login-aside .mark { color: #d9b46c; }
+  .login-aside h2 {
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+    line-height: 1.18;
+    max-width: 14ch;
+    color: #f3eee0;
   }
+  .login-aside p { color: #a9b8b1; max-width: 38ch; margin-top: 18px; font-size: .95rem; }
+  .login-aside small { color: #7f918a; font-size: .78rem; letter-spacing: .04em; }
 
-  .login-card form {
-    display: grid;
-    gap: 16px;
-    margin-top: 24px;
+  .login-main { display: grid; place-items: center; padding: 32px 24px; }
+  .login-box { width: min(380px, 100%); }
+  .login-box h1 { font-size: 1.75rem; }
+  .login-box .lead { color: var(--ink-2); margin: 8px 0 28px; }
+  .login-box form { display: grid; gap: 18px; }
+  .login-box .btn { width: 100%; padding: 11px 16px; }
+
+  /* ---------- Brand ---------- */
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px;
+    display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink);
+    font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
   }
+  .brand-name { font-family: var(--serif); font-size: 1.2rem; letter-spacing: -.01em; }
+  .login-aside .brand-mark { background: #d9b46c; color: #17332d; }
 
-  .login-card button[type="submit"] {
-    width: 100%;
-  }
-
-  /* Layout */
+  /* ---------- Shell ---------- */
 
   .app-shell {
     display: grid;
-    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-columns: 248px minmax(0, 1fr);
     min-height: 100vh;
   }
 
   .sidebar {
-    background: var(--card);
+    background: var(--surface);
     border-right: 1px solid var(--line);
-    padding: 22px 14px;
+    padding: 26px 16px;
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
   }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    font-size: 1.1rem;
-    padding: 0 10px 28px;
-  }
-
-  .brand .brand-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-  }
+  .sidebar .brand { padding: 0 10px 30px; }
 
   .nav-label {
-    color: var(--muted);
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    padding: 12px 10px 8px;
+    font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-3); padding: 0 12px 10px;
   }
-
-  .nav-list {
-    display: grid;
-    gap: 5px;
-  }
-
+  .nav { display: grid; gap: 2px; }
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    text-align: left;
-    padding: 11px 12px;
-    background: transparent;
-    color: var(--text);
-    border: 1px solid transparent;
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; text-align: left; cursor: pointer;
+    padding: 10px 12px; border-radius: 8px;
+    background: none; border: 0; color: var(--ink-2);
+    font-size: .92rem; position: relative;
+    transition: background .15s, color .15s;
+  }
+  .nav-item:hover { background: var(--sunken); color: var(--ink); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .nav-item .soon {
+    margin-left: auto; font-size: .66rem; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-3); border: 1px solid var(--line-strong); border-radius: 99px; padding: 1px 7px;
   }
 
-  .nav-item:hover,
-  .nav-item.active {
-    background: var(--bg);
-    color: var(--primary);
+  .sidebar-foot {
+    margin-top: auto; padding: 16px 10px 0; border-top: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px;
   }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex: none;
+    display: grid; place-items: center;
+    background: var(--sunken); border: 1px solid var(--line-strong);
+    font-family: var(--serif); font-size: .95rem; color: var(--ink-2);
+  }
+  .who { min-width: 0; line-height: 1.3; }
+  .who b { display: block; font-weight: 600; font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who span { font-size: .76rem; color: var(--ink-3); }
 
-  .nav-item.active {
-    border-color: var(--line);
-    font-weight: 600;
-  }
-
-  .nav-icon {
-    display: inline-grid;
-    place-items: center;
-    width: 22px;
-    font-size: 1rem;
-  }
-
-  .sidebar-footer {
-    margin-top: 30px;
-    padding: 14px 10px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: .8rem;
-  }
-
-  .main {
-    min-width: 0;
-    padding: 24px;
-  }
+  .main { min-width: 0; padding: 36px clamp(20px, 4vw, 56px) 56px; max-width: 1180px; width: 100%; }
 
   .topbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 24px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
   }
+  .topbar h1 { font-size: 2rem; line-height: 1.15; }
+  .topbar .sub { color: var(--ink-2); margin-top: 6px; font-size: .92rem; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
 
-  .topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  /* Product */
+  /* ---------- Cards ---------- */
 
   .card {
-    background: var(--card);
+    background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: var(--radius);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
     overflow: hidden;
   }
+  .card-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 18px 22px 14px;
+  }
+  .card-head h3 { font-size: 1.15rem; }
+  .card-head span { color: var(--ink-3); font-size: .82rem; }
+
+  /* ---------- Dashboard ---------- */
+
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px 20px; box-shadow: var(--shadow);
+    position: relative;
+  }
+  .stat::before {
+    content: ""; position: absolute; left: 20px; top: 0; width: 28px; height: 2px; background: var(--brass);
+  }
+  .stat .k { font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .stat .v { font-family: var(--serif); font-size: clamp(1.4rem, 2.2vw, 1.9rem); margin-top: 10px; line-height: 1.15; overflow-wrap: anywhere; }
+  .stat .n { font-size: .8rem; color: var(--ink-3); margin-top: 6px; }
+
+  .two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+  .list { list-style: none; margin: 0; padding: 0 0 8px; }
+  .list li {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 11px 22px; border-top: 1px solid var(--line);
+  }
+  .list li:first-child { border-top: 0; }
+  .list .t { min-width: 0; }
+  .list .t b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .t small { color: var(--ink-3); font-size: .78rem; }
+  .list-empty { padding: 28px 22px 34px; text-align: center; color: var(--ink-3); font-size: .9rem; }
+
+  /* ---------- Toolbar / table ---------- */
 
   .toolbar {
-    display: flex;
-    gap: 10px;
-    padding: 14px;
-    border-bottom: 1px solid var(--line);
-    flex-wrap: wrap;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid var(--line);
+  }
+  .search { position: relative; flex: 1; min-width: 200px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-3); width: 16px; height: 16px; }
+  .search .input { padding-left: 36px; padding-right: 40px; }
+  .search kbd {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font: inherit; font-size: .72rem; color: var(--ink-3);
+    border: 1px solid var(--line-strong); border-radius: 5px; padding: 0 6px; line-height: 1.5;
   }
 
-  .toolbar input {
-    flex: 1;
-    min-width: 180px;
-    width: auto;
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    cursor: pointer; background: none; border: 1px solid var(--line-strong);
+    color: var(--ink-2); border-radius: 99px; padding: 5px 13px; font-size: .84rem;
+    transition: background .15s, color .15s, border-color .15s;
   }
+  .chip:hover { background: var(--sunken); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th,
-  td {
-    text-align: left;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--line);
-    vertical-align: top;
-  }
-
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 14px 18px; vertical-align: middle; }
   th {
-    font-size: .78rem;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: var(--muted);
+    font-size: .72rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ink-3); background: var(--sunken);
+    border-bottom: 1px solid var(--line); white-space: nowrap;
   }
+  td { border-bottom: 1px solid var(--line); }
+  tbody tr { transition: background .12s; }
+  tbody tr:hover { background: color-mix(in srgb, var(--sunken) 55%, transparent); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td.id { color: var(--ink-3); font-size: .84rem; width: 56px; }
+  .pname { font-weight: 500; }
+  .pdesc { color: var(--ink-3); font-size: .84rem; margin-top: 2px; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  tr:last-child td {
-    border-bottom: 0;
-  }
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .row-actions .btn { padding: 5px 11px; font-size: .82rem; }
+  .row-actions .del { color: var(--bad); }
+  .row-actions .del:hover { background: var(--bad-bg); }
 
-  td.num,
-  th.num {
-    text-align: right;
-    white-space: nowrap;
-  }
+  .empty { text-align: center; color: var(--ink-3); padding: 52px 16px !important; }
 
-  .desc {
-    color: var(--muted);
-    font-size: .88rem;
-    margin-top: 3px;
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 99px;
+    font-size: .74rem; font-weight: 600; white-space: nowrap;
   }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.bad { background: var(--bad-bg); color: var(--bad); }
 
-  .actions {
-    display: flex;
-    gap: 6px;
-    justify-content: flex-end;
-  }
-
-  .empty {
-    text-align: center;
-    color: var(--muted);
-    padding: 40px 14px;
-  }
+  .meter { width: 120px; height: 5px; border-radius: 9px; background: var(--sunken); overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 9px; background: var(--ok); }
+  .meter i.warn { background: var(--brass); }
+  .meter i.bad { background: var(--bad); }
 
   .pager {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: .9rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px; border-top: 1px solid var(--line);
+    color: var(--ink-3); font-size: .86rem;
   }
+  .pager div { display: flex; gap: 8px; }
 
-  .pager div {
-    display: flex;
-    gap: 8px;
+  /* ---------- Placeholder module ---------- */
+
+  .soon-card { padding: 64px 28px; text-align: center; }
+  .soon-card .ring {
+    width: 56px; height: 56px; margin: 0 auto 20px; border-radius: 50%;
+    display: grid; place-items: center; color: var(--brass);
+    border: 1px solid var(--line-strong); background: var(--sunken);
   }
+  .soon-card .ring svg { width: 24px; height: 24px; }
+  .soon-card h3 { font-size: 1.4rem; margin-bottom: 8px; }
+  .soon-card p { color: var(--ink-2); max-width: 46ch; margin: 0 auto; }
 
-  /* ERP modules */
-
-  .module-placeholder {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 24px;
-  }
-
-  .module-description {
-    color: var(--muted);
-    margin-bottom: 22px;
-  }
-
-  .module-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .module-card {
-    padding: 18px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg);
-  }
-
-  .module-card strong {
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .module-card p {
-    margin: 0;
-    color: var(--muted);
-    font-size: .88rem;
-  }
-
-  .module-notice {
-    margin-top: 22px;
-    padding: 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    color: var(--muted);
-    font-size: .88rem;
-  }
-
-  /* Dialog */
+  /* ---------- Dialog ---------- */
 
   dialog {
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--card);
-    color: var(--text);
-    padding: 0;
-    width: min(440px, 92vw);
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); color: var(--ink);
+    padding: 0; width: min(460px, 92vw);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .35);
   }
+  dialog::backdrop { background: rgba(20, 20, 17, .5); backdrop-filter: blur(2px); }
+  dialog[open] { animation: pop .18s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.985); } }
 
-  dialog::backdrop {
-    background: rgba(0, 0, 0, .5);
-  }
-
-  form.product-form {
-    padding: 20px;
-    display: grid;
-    gap: 14px;
-  }
-
-  form h2 {
-    margin: 0;
-    font-size: 1.15rem;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 4px;
-  }
+  .dlg-form { padding: 24px; display: grid; gap: 16px; }
+  .dlg-form h2 { font-size: 1.4rem; }
+  .dlg-form .hint { color: var(--ink-2); font-size: .9rem; margin-top: -8px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 
   #toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--text);
-    color: var(--bg);
-    padding: 10px 18px;
-    border-radius: 8px;
-    transition: transform .25s;
-    z-index: 10;
-    max-width: 90vw;
-    text-align: center;
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: var(--ink); color: var(--bg);
+    padding: 11px 20px; border-radius: 10px; font-size: .9rem;
+    transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+    z-index: 20; max-width: 90vw; text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Responsive ---------- */
+
+  @media (max-width: 960px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .two-col { grid-template-columns: 1fr; }
   }
 
-  #toast.show {
-    transform: translateX(-50%) translateY(0);
+  @media (max-width: 820px) {
+    .login-screen { grid-template-columns: 1fr; }
+    .login-aside { display: none; }
   }
 
-  @media (max-width: 900px) {
-    .module-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .app-shell {
-      grid-template-columns: 1fr;
-    }
-
+  @media (max-width: 760px) {
+    .app-shell { grid-template-columns: 1fr; }
     .sidebar {
-      border-right: 0;
-      border-bottom: 1px solid var(--line);
-      padding: 14px;
+      position: static; height: auto; flex-direction: row; flex-wrap: wrap;
+      align-items: center; gap: 8px 12px; padding: 12px 16px;
+      border-right: 0; border-bottom: 1px solid var(--line);
     }
-
-    .brand {
-      padding-bottom: 10px;
-    }
-
-    .nav-label,
-    .sidebar-footer {
-      display: none;
-    }
-
-    .nav-list {
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    .nav-item {
-      width: auto;
-      flex: 1 1 auto;
-    }
-
-    .main {
-      padding: 16px;
-    }
-
-    .hide-sm {
-      display: none;
-    }
-
-    .pager {
-      flex-wrap: wrap;
-    }
+    .sidebar .brand { padding: 0; }
+    .nav-label, .sidebar-foot .who { display: none; }
+    .sidebar-foot { margin: 0 0 0 auto; padding: 0; border: 0; }
+    .nav { display: flex; width: 100%; overflow-x: auto; order: 3; gap: 4px; }
+    .nav-item { width: auto; white-space: nowrap; padding: 8px 12px; }
+    .nav-item .soon { display: none; }
+    .main { padding: 24px 16px 48px; }
+    .topbar h1 { font-size: 1.6rem; }
+    .hide-sm { display: none; }
   }
 
-  @media (max-width: 420px) {
-    .form-row {
-      grid-template-columns: 1fr;
-    }
+  @media (max-width: 460px) {
+    .stats { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    th, td { padding: 12px 10px; }
+  }
 
-    .topbar {
-      align-items: flex-start;
-    }
-
-    .actions {
-      flex-wrap: wrap;
-    }
-
-    th,
-    td {
-      padding: 10px 8px;
-    }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
 
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></symbol>
+  </defs>
+</svg>
+
+<!-- LOGIN -->
+
 <section id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="brand-icon">E</div>
-      <div>
-        <h1>ERP Mini</h1>
-        <div class="sub">Enterprise Resource Planning</div>
-      </div>
+  <aside class="login-aside">
+    <div class="brand">
+      <div class="brand-mark">E</div>
+      <span class="brand-name">ERP Mini</span>
     </div>
 
-    <h2>Selamat datang</h2>
-    <p class="sub">Masuk untuk melanjutkan ke dashboard ERP.</p>
+    <div>
+      <h2>Operasional usaha, tertata rapi.</h2>
+      <p>Kelola produk, pantau persediaan, dan ambil keputusan dari satu tempat yang tenang.</p>
+    </div>
 
-    <form id="loginForm">
-      <label>
-        Username
-        <input
-          name="username"
-          type="text"
-          autocomplete="username"
-          maxlength="50"
-          required
-        >
-      </label>
+    <small>SISTEM MANAJEMEN OPERASIONAL</small>
+  </aside>
 
-      <label>
-        Password
-        <input
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        >
-      </label>
+  <div class="login-main">
+    <div class="login-box">
+      <h1>Selamat datang kembali</h1>
+      <p class="lead">Masuk untuk melanjutkan ke dasbor Anda.</p>
 
-      <div id="loginError" class="err" role="alert"></div>
+      <form id="loginForm">
+        <label class="field">
+          Username
+          <input class="input" name="username" type="text" autocomplete="username" maxlength="50" required>
+        </label>
 
-      <button id="btnLogin" type="submit">Masuk</button>
-    </form>
+        <label class="field">
+          Password
+          <div class="pw-wrap">
+            <input class="input" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" id="pwToggle">Tampilkan</button>
+          </div>
+        </label>
+
+        <div id="loginError" class="err" role="alert"></div>
+
+        <button id="btnLogin" class="btn" type="submit">Masuk</button>
+      </form>
+    </div>
   </div>
 </section>
+
+<!-- APP -->
 
 <div id="appScreen" class="app-shell hidden">
 
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-icon">E</div>
-      <span>ERP Mini</span>
+      <div class="brand-mark">E</div>
+      <span class="brand-name">ERP Mini</span>
     </div>
 
-    <div class="nav-label">Menu utama</div>
+    <div class="nav-label">Menu</div>
 
-    <nav class="nav-list">
-      <button
-        type="button"
-        class="nav-item active"
-        data-page="products"
-      >
-        <span class="nav-icon">▣</span>
-        Manajemen Produk
+    <nav class="nav">
+      <button type="button" class="nav-item active" data-page="dashboard">
+        <svg class="i"><use href="#i-grid"/></svg>Ringkasan
       </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-page="inventory"
-      >
-        <span class="nav-icon">▤</span>
-        Persediaan Barang
+      <button type="button" class="nav-item" data-page="products">
+        <svg class="i"><use href="#i-box"/></svg>Produk
       </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-page="suppliers"
-      >
-        <span class="nav-icon">♧</span>
-        Data Supplier
+      <button type="button" class="nav-item" data-page="inventory">
+        <svg class="i"><use href="#i-layers"/></svg>Persediaan
+      </button>
+      <button type="button" class="nav-item" data-page="suppliers">
+        <svg class="i"><use href="#i-truck"/></svg>Supplier<span class="soon">Segera</span>
       </button>
     </nav>
 
-    <div class="sidebar-footer">
-      ERP Mini<br>
-      Sistem Manajemen Operasional
+    <div class="sidebar-foot">
+      <div class="avatar" id="avatar">A</div>
+      <div class="who">
+        <b id="whoName">Admin</b>
+        <span>Administrator</span>
+      </div>
     </div>
   </aside>
 
@@ -644,172 +598,155 @@
 
     <header class="topbar">
       <div>
-        <h1 id="pageTitle">Manajemen Produk</h1>
+        <h1 id="pageTitle">Ringkasan</h1>
         <div id="summary" class="sub">Memuat data...</div>
-        <div id="welcomeUser" class="sub"></div>
       </div>
 
       <div class="topbar-actions">
-        <button type="button" id="btnLogout" class="ghost">
-          Keluar
+        <button type="button" id="btnTheme" class="icon-btn" aria-label="Ganti tema" title="Ganti tema">
+          <svg class="i"><use id="themeIcon" href="#i-moon"/></svg>
+        </button>
+        <button type="button" id="btnLogout" class="btn ghost sm">
+          <svg class="i" style="width:16px;height:16px"><use href="#i-out"/></svg>Keluar
         </button>
       </div>
     </header>
 
-    <!-- MANAJEMEN PRODUK -->
+    <!-- RINGKASAN -->
 
-    <section id="productsPage">
+    <section id="dashboardPage">
+      <div class="stats">
+        <div class="stat"><div class="k">Total produk</div><div class="v num" id="stProducts">–</div><div class="n">item terdaftar</div></div>
+        <div class="stat"><div class="k">Nilai persediaan</div><div class="v num" id="stValue">–</div><div class="n">harga × stok</div></div>
+        <div class="stat"><div class="k">Total unit</div><div class="v num" id="stUnits">–</div><div class="n">barang di gudang</div></div>
+        <div class="stat"><div class="k">Perlu perhatian</div><div class="v num" id="stAlert">–</div><div class="n">stok menipis atau habis</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><h3>Stok menipis</h3><span>≤ 10 unit</span></div>
+          <ul class="list" id="lowList"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Produk terbaru</h3><span>5 terakhir</span></div>
+          <ul class="list" id="recentList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUK -->
+
+    <section id="productsPage" class="hidden">
       <div class="card">
-
         <div class="toolbar">
-          <input
-            id="search"
-            type="search"
-            placeholder="Cari nama produk..."
-            aria-label="Cari nama produk"
-          >
+          <div class="search">
+            <svg class="i"><use href="#i-search"/></svg>
+            <input id="search" class="input" type="search" placeholder="Cari nama produk" aria-label="Cari nama produk">
+            <kbd>/</kbd>
+          </div>
 
-          <button type="button" id="btnAdd">
-            + Tambah Produk
+          <button type="button" id="btnAdd" class="btn">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Tambah produk
           </button>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th class="hide-sm">ID</th>
-              <th>Produk</th>
-              <th class="num">Harga</th>
-              <th class="num">Stok</th>
-              <th></th>
-            </tr>
-          </thead>
-
-          <tbody id="rows">
-            <tr>
-              <td colspan="5" class="empty">Memuat data...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="hide-sm">ID</th>
+                <th>Produk</th>
+                <th class="r">Harga</th>
+                <th class="r">Stok</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr><td colspan="5" class="empty">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
 
         <div class="pager">
           <span id="pageInfo">Halaman 1</span>
-
           <div>
-            <button type="button" class="ghost small" id="prev">
-              Sebelumnya
-            </button>
-
-            <button type="button" class="ghost small" id="next">
-              Berikutnya
-            </button>
+            <button type="button" class="btn ghost sm" id="prev">Sebelumnya</button>
+            <button type="button" class="btn ghost sm" id="next">Berikutnya</button>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- PERSEDIAAN BARANG -->
+    <!-- PERSEDIAAN -->
 
     <section id="inventoryPage" class="hidden">
-      <div class="module-placeholder">
-        <h2>Persediaan Barang</h2>
-
-        <p class="module-description">
-          Modul untuk memantau ketersediaan dan pergerakan barang
-          dalam operasional perusahaan.
-        </p>
-
-        <div class="module-grid">
-          <div class="module-card">
-            <strong>Stok Barang</strong>
-            <p>Informasi jumlah stok setiap barang.</p>
-          </div>
-
-          <div class="module-card">
-            <strong>Barang Masuk</strong>
-            <p>Pencatatan penerimaan barang dari pemasok.</p>
-          </div>
-
-          <div class="module-card">
-            <strong>Barang Keluar</strong>
-            <p>Pencatatan pengeluaran barang dari persediaan.</p>
+      <div class="card">
+        <div class="toolbar">
+          <div class="chips" id="invChips">
+            <button type="button" class="chip on" data-filter="all">Semua</button>
+            <button type="button" class="chip" data-filter="low">Menipis</button>
+            <button type="button" class="chip" data-filter="out">Habis</button>
           </div>
         </div>
 
-        <div class="module-notice">
-          Halaman ini merupakan rancangan awal. Data persediaan
-          dan transaksi stok belum terhubung ke database.
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Produk</th>
+                <th class="hide-sm">Level stok</th>
+                <th class="r">Stok</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="invRows"></tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <!-- DATA SUPPLIER -->
+    <!-- SUPPLIER -->
 
     <section id="suppliersPage" class="hidden">
-      <div class="module-placeholder">
-        <h2>Data Supplier</h2>
-
-        <p class="module-description">
-          Modul untuk mengelola informasi pemasok yang mendukung
-          proses pengadaan barang perusahaan.
-        </p>
-
-        <div class="module-grid">
-          <div class="module-card">
-            <strong>Informasi Supplier</strong>
-            <p>Nama perusahaan dan identitas pemasok.</p>
-          </div>
-
-          <div class="module-card">
-            <strong>Kontak Supplier</strong>
-            <p>Alamat, nomor telepon, dan email pemasok.</p>
-          </div>
-
-          <div class="module-card">
-            <strong>Riwayat Pembelian</strong>
-            <p>Informasi transaksi pembelian dari pemasok.</p>
-          </div>
-        </div>
-
-        <div class="module-notice">
-          Halaman ini merupakan rancangan awal. Data supplier
-          dan transaksi pembelian belum terhubung ke database.
-        </div>
+      <div class="card soon-card">
+        <div class="ring"><svg class="i"><use href="#i-truck"/></svg></div>
+        <h3>Modul supplier sedang disiapkan</h3>
+        <p>Data pemasok, kontak, dan riwayat pembelian akan tersedia di sini setelah terhubung ke database.</p>
       </div>
     </section>
 
   </main>
 </div>
 
-<!-- FORM TAMBAH DAN EDIT PRODUK -->
+<!-- FORM PRODUK -->
 
 <dialog id="dlg">
-  <form id="form" class="product-form" novalidate>
-    <h2 id="dlgTitle">Tambah Produk</h2>
+  <form id="form" class="dlg-form" novalidate>
+    <h2 id="dlgTitle">Tambah produk</h2>
 
-    <label>
+    <label class="field">
       Nama
-      <input name="name" maxlength="100" autocomplete="off" required>
+      <input class="input" name="name" maxlength="100" autocomplete="off" required>
       <span class="err" data-for="name"></span>
     </label>
 
-    <label>
+    <label class="field">
       Deskripsi
-      <textarea name="description" rows="3" maxlength="500"></textarea>
+      <textarea class="input" name="description" rows="3" maxlength="500"></textarea>
       <span class="err" data-for="description"></span>
     </label>
 
     <div class="form-row">
-      <label>
+      <label class="field">
         Harga (Rp)
-        <input name="price" type="number" min="0" step="1" required>
+        <input class="input num" name="price" type="number" min="0" step="1" required>
         <span class="err" data-for="price"></span>
       </label>
 
-      <label>
+      <label class="field">
         Stok
-        <input name="stock" type="number" min="0" step="1" value="0" required>
+        <input class="input num" name="stock" type="number" min="0" step="1" value="0" required>
         <span class="err" data-for="stock"></span>
       </label>
     </div>
@@ -817,15 +754,23 @@
     <div class="err" id="formErr" role="alert"></div>
 
     <div class="form-actions">
-      <button type="button" class="ghost" id="btnCancel">
-        Batal
-      </button>
-
-      <button type="submit" id="btnSave">
-        Simpan
-      </button>
+      <button type="button" class="btn ghost" id="btnCancel">Batal</button>
+      <button type="submit" class="btn" id="btnSave">Simpan</button>
     </div>
   </form>
+</dialog>
+
+<!-- KONFIRMASI HAPUS -->
+
+<dialog id="dlgDel">
+  <div class="dlg-form">
+    <h2>Hapus produk?</h2>
+    <p class="hint" id="delText"></p>
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="delCancel">Batal</button>
+      <button type="button" class="btn danger" id="delOk">Hapus</button>
+    </div>
+  </div>
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -833,96 +778,134 @@
 <script>
 const API = '/api/v1/products';
 const AUTH_API = '/api/v1/auth';
+const LOW_STOCK = 10;
 
 const state = {
   page: 1,
-  limit: 5,
+  limit: 8,
   search: '',
   totalPages: 1,
   user: null,
+  current: 'dashboard',
+  all: [],       // sampai 100 produk, untuk ringkasan & persediaan
+  total: 0,
+  invFilter: 'all',
 };
 
-const $ = (selector) => document.querySelector(selector);
+const $ = (s) => document.querySelector(s);
 
-const rupiah = (value) =>
+const rupiah = (v) =>
   new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(value);
+    style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
+  }).format(v);
+
+const nf = new Intl.NumberFormat('id-ID');
 
 let editingId = null;
+let deletingProduct = null;
 let toastTimer;
 let searchTimer;
 
+/* ---------- util ---------- */
+
+function el(tag, className, text) {
+  const e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
+}
+
 function toast(message) {
-  const element = $('#toast');
-
-  element.textContent = message;
-  element.classList.add('show');
-
+  const e = $('#toast');
+  e.textContent = message;
+  e.classList.add('show');
   clearTimeout(toastTimer);
-
-  toastTimer = setTimeout(() => {
-    element.classList.remove('show');
-  }, 2500);
+  toastTimer = setTimeout(() => e.classList.remove('show'), 2500);
 }
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
     ...options,
     credentials: 'same-origin',
-    headers: {
-      ...(options.headers || {}),
-    },
+    headers: { ...(options.headers || {}) },
   });
 
   const body = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(
-      body.message || 'Terjadi kesalahan pada server.'
-    );
-
+    const error = new Error(body.message || 'Terjadi kesalahan pada server.');
     error.status = response.status;
     error.fields = body.errors || {};
-
     throw error;
   }
-
   return body;
 }
 
+function stockStatus(stock) {
+  if (stock <= 0) return { key: 'out', label: 'Habis', cls: 'bad' };
+  if (stock <= LOW_STOCK) return { key: 'low', label: 'Menipis', cls: 'warn' };
+  return { key: 'ok', label: 'Tersedia', cls: 'ok' };
+}
+
+/* ---------- tema ---------- */
+
+function currentTheme() {
+  const set = document.documentElement.dataset.theme;
+  if (set) return set;
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function paintThemeIcon() {
+  $('#themeIcon').setAttribute('href', currentTheme() === 'dark' ? '#i-sun' : '#i-moon');
+}
+
+$('#btnTheme').addEventListener('click', () => {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('theme', next); } catch (e) {}
+  paintThemeIcon();
+});
+
+paintThemeIcon();
+
+/* ---------- auth ---------- */
+
 function showLogin() {
   state.user = null;
-
   $('#loginScreen').classList.remove('hidden');
   $('#appScreen').classList.add('hidden');
-
   $('#loginError').textContent = '';
 }
 
 async function showApp(user) {
   state.user = user;
 
+  const name = user.full_name || user.username || 'Admin';
+  $('#whoName').textContent = name;
+  $('#avatar').textContent = name.trim().charAt(0).toUpperCase();
+
   $('#loginScreen').classList.add('hidden');
   $('#appScreen').classList.remove('hidden');
 
-  $('#welcomeUser').textContent =
-    `Login sebagai ${user.full_name || user.username}`;
-
-  await load();
+  setPage(state.current);
+  await refreshAll();
 }
 
 async function initializeApp() {
   try {
     const result = await api(`${AUTH_API}/me`);
-
     await showApp(result.data);
   } catch {
     showLogin();
   }
 }
+
+$('#pwToggle').addEventListener('click', () => {
+  const input = $('#loginForm').elements.password;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  $('#pwToggle').textContent = show ? 'Sembunyikan' : 'Tampilkan';
+});
 
 $('#loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -938,9 +921,7 @@ $('#loginForm').addEventListener('submit', async (event) => {
   try {
     const result = await api(`${AUTH_API}/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: form.elements.username.value.trim(),
         password: form.elements.password.value,
@@ -948,7 +929,6 @@ $('#loginForm').addEventListener('submit', async (event) => {
     });
 
     form.elements.password.value = '';
-
     await showApp(result.data);
   } catch (error) {
     errorElement.textContent = error.message;
@@ -960,14 +940,10 @@ $('#loginForm').addEventListener('submit', async (event) => {
 
 $('#btnLogout').addEventListener('click', async () => {
   const button = $('#btnLogout');
-
   button.disabled = true;
 
   try {
-    await api(`${AUTH_API}/logout`, {
-      method: 'POST',
-    });
-
+    await api(`${AUTH_API}/logout`, { method: 'POST' });
     $('#loginForm').reset();
     showLogin();
   } catch (error) {
@@ -982,46 +958,187 @@ $('#btnLogout').addEventListener('click', async () => {
   }
 });
 
-function setPage(page) {
-  const pages = {
-    products: ['productsPage', 'Manajemen Produk'],
-    inventory: ['inventoryPage', 'Persediaan Barang'],
-    suppliers: ['suppliersPage', 'Data Supplier'],
-  };
+/* ---------- navigasi ---------- */
 
-  const selected = pages[page];
+const PAGES = {
+  dashboard: ['dashboardPage', 'Ringkasan'],
+  products: ['productsPage', 'Manajemen Produk'],
+  inventory: ['inventoryPage', 'Persediaan Barang'],
+  suppliers: ['suppliersPage', 'Data Supplier'],
+};
 
-  if (!selected) {
-    return;
-  }
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Selamat pagi';
+  if (h < 15) return 'Selamat siang';
+  if (h < 18) return 'Selamat sore';
+  return 'Selamat malam';
+}
 
-  document.querySelectorAll('[data-page]').forEach((button) => {
-    button.classList.toggle(
-      'active',
-      button.dataset.page === page
-    );
-  });
+function updateSummary() {
+  const s = $('#summary');
+  const total = state.total;
 
-  Object.values(pages).forEach(([id]) => {
-    $('#' + id).classList.add('hidden');
-  });
-
-  const [pageId, title] = selected;
-
-  $('#' + pageId).classList.remove('hidden');
-  $('#pageTitle').textContent = title;
-
-  if (page === 'products') {
-    $('#summary').textContent = 'Kelola katalog produk';
-  } else {
-    $('#summary').textContent = 'Modul ERP';
+  switch (state.current) {
+    case 'dashboard': {
+      const name = (state.user && (state.user.full_name || state.user.username)) || '';
+      const date = new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      }).format(new Date());
+      s.textContent = `${greeting()}, ${name}. ${date}.`;
+      break;
+    }
+    case 'products': s.textContent = `${nf.format(total)} produk tersimpan`; break;
+    case 'inventory': s.textContent = 'Pantau ketersediaan barang secara langsung'; break;
+    default: s.textContent = 'Segera hadir';
   }
 }
 
-document.querySelectorAll('[data-page]').forEach((button) => {
-  button.addEventListener('click', () => {
-    setPage(button.dataset.page);
+function setPage(page) {
+  const selected = PAGES[page];
+  if (!selected) return;
+
+  state.current = page;
+
+  document.querySelectorAll('[data-page]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.page === page);
   });
+
+  Object.values(PAGES).forEach(([id]) => $('#' + id).classList.add('hidden'));
+  $('#' + selected[0]).classList.remove('hidden');
+  $('#pageTitle').textContent = selected[1];
+
+  updateSummary();
+}
+
+document.querySelectorAll('[data-page]').forEach((b) => {
+  b.addEventListener('click', () => setPage(b.dataset.page));
+});
+
+/* ---------- data ---------- */
+
+async function refreshAll() {
+  await Promise.all([load(), loadOverview()]);
+}
+
+async function loadOverview() {
+  try {
+    const result = await api(`${API}?page=1&limit=100`);
+    state.all = result.data || [];
+    state.total = Number((result.meta || {}).total) || state.all.length;
+    renderOverview();
+    renderInventory();
+    updateSummary();
+  } catch (error) {
+    if (error.status === 401) showLogin();
+  }
+}
+
+function renderOverview() {
+  const items = state.all;
+  const value = items.reduce((a, p) => a + p.price * p.stock, 0);
+  const units = items.reduce((a, p) => a + p.stock, 0);
+  const alerts = items.filter((p) => p.stock <= LOW_STOCK).length;
+  const partial = state.total > items.length;
+
+  $('#stProducts').textContent = nf.format(state.total);
+  $('#stValue').textContent = rupiah(value);
+  $('#stUnits').textContent = nf.format(units);
+  $('#stAlert').textContent = nf.format(alerts);
+
+  if (partial) {
+    document.querySelector('#stValue + .n').textContent = `dihitung dari ${items.length} produk`;
+  }
+
+  const low = items
+    .filter((p) => p.stock <= LOW_STOCK)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 5);
+
+  fillList($('#lowList'), low, 'Semua stok dalam kondisi aman.', (p) => {
+    const st = stockStatus(p.stock);
+    return [p.name, rupiah(p.price), el('span', 'badge ' + st.cls, `${p.stock} unit`)];
+  });
+
+  const recent = [...items]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+
+  fillList($('#recentList'), recent, 'Belum ada produk.', (p) => {
+    const d = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' })
+      .format(new Date(p.created_at));
+    return [p.name, d, el('span', 'num', rupiah(p.price))];
+  });
+}
+
+function fillList(ul, items, emptyText, map) {
+  ul.replaceChildren();
+
+  if (!items.length) {
+    const li = el('li', 'list-empty', emptyText);
+    li.style.display = 'block';
+    ul.append(li);
+    return;
+  }
+
+  for (const p of items) {
+    const [title, sub, right] = map(p);
+    const li = el('li');
+    const t = el('div', 't');
+    t.append(el('b', '', title), el('small', '', sub));
+    li.append(t, right);
+    ul.append(li);
+  }
+}
+
+function renderInventory() {
+  const tbody = $('#invRows');
+  tbody.replaceChildren();
+
+  let items = [...state.all].sort((a, b) => a.stock - b.stock);
+
+  if (state.invFilter === 'low') items = items.filter((p) => stockStatus(p.stock).key === 'low');
+  if (state.invFilter === 'out') items = items.filter((p) => p.stock <= 0);
+
+  if (!items.length) {
+    const tr = el('tr');
+    const td = el('td', 'empty', 'Tidak ada produk pada kategori ini.');
+    td.colSpan = 4;
+    tr.append(td);
+    tbody.append(tr);
+    return;
+  }
+
+  const max = Math.max(...state.all.map((p) => p.stock), LOW_STOCK * 2);
+
+  for (const p of items) {
+    const st = stockStatus(p.stock);
+    const tr = el('tr');
+
+    const name = el('td');
+    name.append(el('div', 'pname', p.name));
+
+    const level = el('td', 'hide-sm');
+    const meter = el('div', 'meter');
+    const bar = el('i', st.cls === 'ok' ? '' : st.cls);
+    bar.style.width = Math.max(2, Math.min(100, (p.stock / max) * 100)) + '%';
+    meter.append(bar);
+    level.append(meter);
+
+    const badgeCell = el('td');
+    badgeCell.append(el('span', 'badge ' + st.cls, st.label));
+
+    tr.append(name, level, el('td', 'r num', nf.format(p.stock)), badgeCell);
+    tbody.append(tr);
+  }
+}
+
+$('#invChips').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  state.invFilter = chip.dataset.filter;
+  document.querySelectorAll('#invChips .chip').forEach((c) => c.classList.toggle('on', c === chip));
+  renderInventory();
 });
 
 async function load() {
@@ -1029,151 +1146,101 @@ async function load() {
     page: String(state.page),
     limit: String(state.limit),
   });
-
-  if (state.search) {
-    query.set('search', state.search);
-  }
+  if (state.search) query.set('search', state.search);
 
   try {
     const result = await api(`${API}?${query}`);
-
     render(result.data || [], result.meta || {});
   } catch (error) {
-    if (error.status === 401) {
-      showLogin();
-      return;
-    }
+    if (error.status === 401) { showLogin(); return; }
 
-    $('#summary').textContent =
-      'Gagal memuat data: ' + error.message;
-
-    $('#rows').replaceChildren();
-
-    const row = document.createElement('tr');
-    const cell = document.createElement('td');
-
-    cell.colSpan = 5;
-    cell.className = 'empty';
-    cell.textContent = 'Data produk gagal dimuat.';
-
-    row.append(cell);
-    $('#rows').append(row);
+    const tbody = $('#rows');
+    tbody.replaceChildren();
+    const tr = el('tr');
+    const td = el('td', 'empty', 'Data produk gagal dimuat: ' + error.message);
+    td.colSpan = 5;
+    tr.append(td);
+    tbody.append(tr);
   }
-}
-
-function cell(tag, text, className) {
-  const element = document.createElement(tag);
-
-  element.textContent = text ?? '';
-
-  if (className) {
-    element.className = className;
-  }
-
-  return element;
 }
 
 function render(items, meta) {
   const page = Number(meta.page) || state.page;
-  const limit = Number(meta.limit) || state.limit;
-  const total = Number(meta.total) || 0;
   const totalPages = Number(meta.total_pages) || 0;
 
   state.page = page;
   state.totalPages = Math.max(totalPages, 1);
 
-  $('#summary').textContent = `${total} produk tersimpan`;
-  $('#pageInfo').textContent =
-    `Halaman ${page} dari ${state.totalPages}`;
-
+  $('#pageInfo').textContent = `Halaman ${page} dari ${state.totalPages}`;
   $('#prev').disabled = page <= 1;
   $('#next').disabled = page >= state.totalPages;
 
   const tbody = $('#rows');
-
   tbody.replaceChildren();
 
-  if (items.length === 0) {
-    const row = document.createElement('tr');
-    const emptyCell = cell('td', 'Belum ada produk.', 'empty');
-
-    emptyCell.colSpan = 5;
-    row.append(emptyCell);
-    tbody.append(row);
-
+  if (!items.length) {
+    const tr = el('tr');
+    const td = el('td', 'empty', state.search ? 'Produk tidak ditemukan.' : 'Belum ada produk.');
+    td.colSpan = 5;
+    tr.append(td);
+    tbody.append(tr);
     return;
   }
 
-  for (const product of items) {
-    const row = document.createElement('tr');
+  for (const p of items) {
+    const tr = el('tr');
 
-    const nameCell = document.createElement('td');
+    const nameCell = el('td');
+    nameCell.append(el('div', 'pname', p.name));
+    if (p.description) nameCell.append(el('div', 'pdesc', p.description));
 
-    nameCell.append(cell('div', product.name));
-
-    if (product.description) {
-      nameCell.append(
-        cell('div', product.description, 'desc')
-      );
-    }
-
-    const actions = cell('td', '', 'actions');
-
-    const editButton = cell(
-      'button',
-      'Edit',
-      'ghost small'
+    const stockCell = el('td', 'r num');
+    const st = stockStatus(p.stock);
+    stockCell.append(
+      el('span', '', nf.format(p.stock) + ' '),
+      el('span', 'badge ' + st.cls, st.label)
     );
 
-    editButton.type = 'button';
-    editButton.addEventListener('click', () => {
-      openForm(product);
-    });
+    const actions = el('td');
+    const wrap = el('div', 'row-actions');
 
-    const deleteButton = cell(
-      'button',
-      'Hapus',
-      'danger'
-    );
+    const edit = el('button', 'btn ghost', 'Edit');
+    edit.type = 'button';
+    edit.addEventListener('click', () => openForm(p));
 
-    deleteButton.type = 'button';
-    deleteButton.addEventListener('click', () => {
-      removeProduct(product);
-    });
+    const del = el('button', 'btn ghost del', 'Hapus');
+    del.type = 'button';
+    del.addEventListener('click', () => askDelete(p));
 
-    actions.append(editButton, deleteButton);
+    wrap.append(edit, del);
+    actions.append(wrap);
 
-    row.append(
-      cell('td', product.id, 'hide-sm'),
+    tr.append(
+      el('td', 'id hide-sm', p.id),
       nameCell,
-      cell('td', rupiah(product.price), 'num'),
-      cell('td', product.stock, 'num'),
+      el('td', 'r num', rupiah(p.price)),
+      stockCell,
       actions
     );
-
-    tbody.append(row);
+    tbody.append(tr);
   }
 }
 
+/* ---------- form produk ---------- */
+
 function clearErrors() {
-  document.querySelectorAll('.err').forEach((element) => {
-    element.textContent = '';
-  });
+  document.querySelectorAll('.err').forEach((e) => { if (e.id !== 'loginError') e.textContent = ''; });
 }
 
 function openForm(product) {
   editingId = product ? product.id : null;
-
   clearErrors();
 
   const form = $('#form');
-
-  $('#dlgTitle').textContent =
-    product ? 'Edit Produk' : 'Tambah Produk';
+  $('#dlgTitle').textContent = product ? 'Edit produk' : 'Tambah produk';
 
   form.elements.name.value = product ? product.name : '';
-  form.elements.description.value =
-    product ? product.description : '';
+  form.elements.description.value = product ? product.description : '';
   form.elements.price.value = product ? product.price : '';
   form.elements.stock.value = product ? product.stock : 0;
 
@@ -1181,36 +1248,39 @@ function openForm(product) {
   form.elements.name.focus();
 }
 
-async function removeProduct(product) {
-  if (!confirm(`Hapus produk "${product.name}"?`)) {
-    return;
-  }
+function askDelete(product) {
+  deletingProduct = product;
+  $('#delText').textContent = `“${product.name}” akan dihapus permanen dan tidak dapat dikembalikan.`;
+  $('#dlgDel').showModal();
+}
+
+$('#delCancel').addEventListener('click', () => $('#dlgDel').close());
+
+$('#delOk').addEventListener('click', async () => {
+  const product = deletingProduct;
+  if (!product) return;
+
+  const button = $('#delOk');
+  button.disabled = true;
 
   try {
-    await api(`${API}/${product.id}`, {
-      method: 'DELETE',
-    });
-
+    await api(`${API}/${product.id}`, { method: 'DELETE' });
+    $('#dlgDel').close();
     toast('Produk berhasil dihapus');
 
-    if ($('#rows').children.length === 1 && state.page > 1) {
-      state.page--;
-    }
-
-    await load();
+    if ($('#rows').children.length === 1 && state.page > 1) state.page--;
+    await refreshAll();
   } catch (error) {
-    if (error.status === 401) {
-      showLogin();
-      return;
-    }
-
+    $('#dlgDel').close();
+    if (error.status === 401) { showLogin(); return; }
     toast(error.message);
+  } finally {
+    button.disabled = false;
   }
-}
+});
 
 $('#form').addEventListener('submit', async (event) => {
   event.preventDefault();
-
   clearErrors();
 
   const form = event.currentTarget;
@@ -1221,13 +1291,10 @@ $('#form').addEventListener('submit', async (event) => {
 
   if (
     !form.elements.name.value.trim() ||
-    !Number.isSafeInteger(price) ||
-    price < 0 ||
-    !Number.isSafeInteger(stock) ||
-    stock < 0
+    !Number.isSafeInteger(price) || price < 0 ||
+    !Number.isSafeInteger(stock) || stock < 0
   ) {
-    $('#formErr').textContent =
-      'Nama, harga, atau stok tidak valid.';
+    $('#formErr').textContent = 'Nama, harga, atau stok tidak valid.';
     return;
   }
 
@@ -1247,44 +1314,22 @@ $('#form').addEventListener('submit', async (event) => {
   try {
     await api(url, {
       method: isEditing ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     $('#dlg').close();
+    toast(isEditing ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan');
 
-    toast(
-      isEditing
-        ? 'Produk berhasil diperbarui'
-        : 'Produk berhasil ditambahkan'
-    );
-
-    if (!isEditing) {
-      state.page = 1;
-    }
-
-    await load();
+    if (!isEditing) state.page = 1;
+    await refreshAll();
   } catch (error) {
-    if (error.status === 401) {
-      $('#dlg').close();
-      showLogin();
-      return;
+    if (error.status === 401) { $('#dlg').close(); showLogin(); return; }
+
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = document.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
     }
-
-    for (const [field, message] of Object.entries(
-      error.fields || {}
-    )) {
-      const element = document.querySelector(
-        `.err[data-for="${field}"]`
-      );
-
-      if (element) {
-        element.textContent = message;
-      }
-    }
-
     if (!Object.keys(error.fields || {}).length) {
       $('#formErr').textContent = error.message;
     }
@@ -1294,37 +1339,35 @@ $('#form').addEventListener('submit', async (event) => {
   }
 });
 
-$('#btnAdd').addEventListener('click', () => {
-  openForm(null);
-});
-
-$('#btnCancel').addEventListener('click', () => {
-  $('#dlg').close();
-});
+$('#btnAdd').addEventListener('click', () => openForm(null));
+$('#btnCancel').addEventListener('click', () => $('#dlg').close());
 
 $('#prev').addEventListener('click', async () => {
-  if (state.page > 1) {
-    state.page--;
-    await load();
-  }
+  if (state.page > 1) { state.page--; await load(); }
 });
 
 $('#next').addEventListener('click', async () => {
-  if (state.page < state.totalPages) {
-    state.page++;
-    await load();
-  }
+  if (state.page < state.totalPages) { state.page++; await load(); }
 });
 
 $('#search').addEventListener('input', (event) => {
   clearTimeout(searchTimer);
-
   searchTimer = setTimeout(async () => {
     state.search = event.target.value.trim();
     state.page = 1;
-
     await load();
   }, 300);
+});
+
+// Tekan "/" untuk langsung mencari produk.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+  if ($('#appScreen').classList.contains('hidden')) return;
+  e.preventDefault();
+  setPage('products');
+  $('#search').focus();
 });
 
 initializeApp();
