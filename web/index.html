@@ -462,6 +462,17 @@
   .po-item { display: grid; grid-template-columns: minmax(0, 1fr) 76px 120px auto; gap: 6px; align-items: center; }
   .po-total { display: flex; justify-content: flex-end; gap: 10px; align-items: baseline; }
   #dlgPo, #dlgPoView { width: min(640px, calc(100vw - 32px)); }
+  .fin-dates { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+  .fin-dates label { display: flex; align-items: center; gap: 6px; font-size: .88rem; color: var(--ink-2); }
+  .fin-dates .input { width: auto; padding: 8px 10px; }
+  .fin-head td { font-weight: 600; background: var(--sunken); font-size: .8rem; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+  .fin-total td { font-weight: 600; border-top: 1px solid var(--line); }
+  .fin-sub { padding-left: 32px; }
+  .amt-in { color: var(--ok, #1f6b4a); }
+  .amt-out { color: var(--bad, #a33a2f); }
+  #finPL, #finBS, #finCash { margin-bottom: 8px; }
+  #finCash .two-col { grid-template-columns: 1fr; }
+  @media (min-width: 1700px) { #finCash .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
   .check input { width: 16px; height: 16px; accent-color: var(--accent); }
   select.input { appearance: auto; }
@@ -543,6 +554,7 @@
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2 .7 3.5 2.6 3.5 5.7"/></symbol>
     <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2 11h10.5l2-8H6.5"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/></symbol>
     <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></symbol>
   </defs>
 </svg>
@@ -618,6 +630,9 @@
       </button>
       <button type="button" class="nav-item" data-page="purchases">
         <svg class="i"><use href="#i-cart"/></svg>Pembelian
+      </button>
+      <button type="button" class="nav-item" data-page="finance">
+        <svg class="i"><use href="#i-wallet"/></svg>Keuangan
       </button>
       <button type="button" class="nav-item hidden" data-page="users" id="navUsers">
         <svg class="i"><use href="#i-users"/></svg>Pengguna
@@ -827,12 +842,100 @@
       </div>
     </section>
 
+    <!-- KEUANGAN -->
+
+    <section id="financePage" class="hidden">
+      <div class="card" style="margin-bottom:16px">
+        <div class="toolbar">
+          <div class="chips" id="finTabs">
+            <button type="button" class="chip on" data-tab="cash">Arus kas</button>
+            <button type="button" class="chip" data-tab="pl">Laba rugi</button>
+            <button type="button" class="chip" data-tab="bs">Neraca</button>
+          </div>
+          <div class="fin-dates">
+            <label id="finFromWrap">Dari <input type="date" id="finFrom" class="input"></label>
+            <label>Sampai <input type="date" id="finTo" class="input"></label>
+          </div>
+          <button type="button" id="btnAddTx" class="btn">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Catat transaksi
+          </button>
+        </div>
+      </div>
+
+      <div id="finCash">
+        <div class="stats">
+          <div class="stat"><div class="k">Saldo awal</div><div class="v num" id="cfOpening">–</div><div class="n">sebelum periode</div></div>
+          <div class="stat"><div class="k">Kas masuk</div><div class="v num" id="cfIn">–</div><div class="n">selama periode</div></div>
+          <div class="stat"><div class="k">Kas keluar</div><div class="v num" id="cfOut">–</div><div class="n">selama periode</div></div>
+          <div class="stat"><div class="k">Saldo akhir</div><div class="v num" id="cfClosing">–</div><div class="n">akhir periode</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Laporan arus kas</th><th class="r">Jumlah</th></tr></thead>
+                <tbody id="cfRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th class="hide-sm">Tanggal</th><th>Transaksi</th><th class="hide-md">Jenis</th><th class="r">Jumlah</th><th></th></tr></thead>
+                <tbody id="txRows"></tbody>
+              </table>
+            </div>
+            <div class="pager">
+              <span id="txInfo">Halaman 1</span>
+              <div>
+                <button type="button" class="btn ghost sm" id="txPrev">Sebelumnya</button>
+                <button type="button" class="btn ghost sm" id="txNext">Berikutnya</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="finPL" class="hidden">
+        <div class="card" style="max-width:720px">
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Laporan laba rugi</th><th class="r">Jumlah</th></tr></thead>
+              <tbody id="plRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="finBS" class="hidden">
+        <div class="two-col">
+          <div class="card">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Aset</th><th class="r">Jumlah</th></tr></thead>
+                <tbody id="bsAssets"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Liabilitas &amp; ekuitas</th><th class="r">Jumlah</th></tr></thead>
+                <tbody id="bsEquity"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="hint" id="bsNote" style="margin-top:12px"></p>
+      </div>
+    </section>
+
     <!-- PENGGUNA (admin) -->
 
     <section id="usersPage" class="hidden">
       <div class="card">
         <div class="toolbar">
-          <div class="hint">Kelola akun dan role. Admin: akses penuh · Manager: tambah/ubah produk · Staff: hanya lihat.</div>
+          <div class="hint">Kelola akun dan role. Administrator: semua fitur · Gudang: produk &amp; persediaan · Supplier: data supplier · Kasir: pembelian · Keuangan: arus kas, laba rugi, neraca.</div>
           <button type="button" id="btnAddUser" class="btn">
             <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Tambah pengguna
           </button>
@@ -893,6 +996,56 @@
     <div class="form-actions">
       <button type="button" class="btn ghost" id="btnCancel">Batal</button>
       <button type="submit" class="btn" id="btnSave">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- FORM TRANSAKSI KAS -->
+
+<dialog id="dlgTx">
+  <form id="txForm" class="dlg-form" novalidate>
+    <h2>Catat transaksi kas</h2>
+
+    <div class="form-row">
+      <label class="field">
+        Jenis
+        <select class="input" name="type">
+          <option value="in">Kas masuk</option>
+          <option value="out">Kas keluar</option>
+        </select>
+        <span class="err" data-for="type"></span>
+      </label>
+      <label class="field">
+        Kategori
+        <select class="input" name="category"></select>
+        <span class="err" data-for="category"></span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label class="field">
+        Tanggal
+        <input class="input" name="date" type="date" required>
+        <span class="err" data-for="date"></span>
+      </label>
+      <label class="field">
+        Jumlah (Rp)
+        <input class="input num" name="amount" type="number" min="1" step="1" required>
+        <span class="err" data-for="amount"></span>
+      </label>
+    </div>
+
+    <label class="field">
+      Keterangan
+      <input class="input" name="description" maxlength="200" autocomplete="off">
+      <span class="err" data-for="description"></span>
+    </label>
+
+    <div class="err" id="txFormErr" role="alert"></div>
+
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="txCancel">Batal</button>
+      <button type="submit" class="btn" id="txSave">Simpan</button>
     </div>
   </form>
 </dialog>
@@ -1041,9 +1194,11 @@
       <label class="field">
         Role
         <select class="input" name="role">
-          <option value="staff">Staff</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
+          <option value="kasir">Kasir (pembelian)</option>
+          <option value="supplier">Supplier (data supplier)</option>
+          <option value="gudang">Gudang (produk &amp; persediaan)</option>
+          <option value="keuangan">Keuangan (arus kas, neraca)</option>
+          <option value="admin">Administrator (semua fitur)</option>
         </select>
         <span class="err" data-for="role"></span>
       </label>
@@ -1077,11 +1232,26 @@
 const API = '/api/v1/products';
 const AUTH_API = '/api/v1/auth';
 const LOW_STOCK = 10;
-const ROLE_LABEL = { admin: 'Administrator', manager: 'Manager', staff: 'Staff' };
+const ROLE_LABEL = { admin: 'Administrator', gudang: 'Gudang', supplier: 'Supplier', kasir: 'Kasir', keuangan: 'Keuangan' };
+
+// Menu yang boleh dibuka tiap role (admin = semua).
+const ROLE_PAGES = {
+  admin: ['dashboard', 'products', 'inventory', 'suppliers', 'purchases', 'finance', 'users'],
+  gudang: ['dashboard', 'products', 'inventory'],
+  supplier: ['suppliers'],
+  kasir: ['purchases'],
+  keuangan: ['finance'],
+};
+const roleIs = (...r) => !!state.user && r.includes(state.user.role);
 const can = {
-  write: () => state.user && ['admin', 'manager'].includes(state.user.role),
-  remove: () => state.user && state.user.role === 'admin',
-  users: () => state.user && state.user.role === 'admin',
+  page: (p) => !!state.user && (ROLE_PAGES[state.user.role] || []).includes(p),
+  product: () => roleIs('admin', 'gudang'),       // tambah/ubah/hapus produk
+  supplier: () => roleIs('admin', 'supplier'),    // tambah/ubah/hapus supplier
+  purchase: () => roleIs('admin', 'kasir'),       // buat/terima/batalkan pembelian
+  users: () => roleIs('admin'),
+  // Data yang dimuat sebagai bahan form/ringkasan
+  readProducts: () => roleIs('admin', 'gudang', 'kasir'),
+  readSuppliers: () => roleIs('admin', 'supplier', 'kasir'),
 };
 
 const state = {
@@ -1194,18 +1364,21 @@ async function showApp(user) {
   $('#whoName').textContent = name;
   $('#avatar').textContent = name.trim().charAt(0).toUpperCase();
   $('#whoRole').textContent = ROLE_LABEL[user.role] || user.role;
-  $('#navUsers').classList.toggle('hidden', !can.users());
-  $('#btnAdd').classList.toggle('hidden', !can.write());
+  document.querySelectorAll('.nav-item[data-page]').forEach((b) => {
+    b.classList.toggle('hidden', !can.page(b.dataset.page));
+  });
+  $('#btnAdd').classList.toggle('hidden', !can.product());
+  $('#btnAddSup').classList.toggle('hidden', !can.supplier());
+  $('#btnAddPo').classList.toggle('hidden', !can.purchase());
 
   $('#loginScreen').classList.add('hidden');
   $('#appScreen').classList.remove('hidden');
 
-  $('#btnAddSup').classList.toggle('hidden', !can.write());
-  setPage(state.current);
-  await refreshAll();
-  $('#btnAddPo').classList.toggle('hidden', !can.write());
-  loadSuppliers();
-  loadPurchases();
+  setPage(ROLE_PAGES[user.role][0]);
+  if (can.readProducts()) await refreshAll();
+  if (can.page('suppliers')) loadSuppliers();
+  if (can.page('purchases')) loadPurchases();
+  if (can.page('finance')) loadFinance();
   if (can.users()) loadUsers();
 }
 
@@ -1284,6 +1457,7 @@ const PAGES = {
   inventory: ['inventoryPage', 'Persediaan Barang'],
   suppliers: ['suppliersPage', 'Manajemen Supplier'],
   purchases: ['purchasesPage', 'Pembelian Barang'],
+  finance: ['financePage', 'Keuangan'],
   users: ['usersPage', 'Manajemen Pengguna'],
 };
 
@@ -1312,13 +1486,14 @@ function updateSummary() {
     case 'inventory': s.textContent = 'Pantau ketersediaan barang secara langsung'; break;
     case 'suppliers': s.textContent = `${nf.format(supState.total)} supplier · ${nf.format(supState.active)} aktif`; break;
     case 'purchases': s.textContent = `${nf.format(poState.total)} pembelian · ${nf.format(poState.pending)} menunggu diterima`; break;
+    case 'finance': s.textContent = 'Arus kas, laba rugi, dan neraca'; break;
     case 'users': s.textContent = 'Akun dan hak akses'; break;
     default: s.textContent = 'Segera hadir';
   }
 }
 
 function setPage(page) {
-  if (page === 'users' && !can.users()) page = 'dashboard';
+  if (!can.page(page)) return;
   const selected = PAGES[page];
   if (!selected) return;
 
@@ -1333,6 +1508,7 @@ function setPage(page) {
   $('#pageTitle').textContent = selected[1];
 
   updateSummary();
+  if (page === 'finance') loadFinance();
 }
 
 document.querySelectorAll('[data-page]').forEach((b) => {
@@ -1536,8 +1712,7 @@ function render(items, meta) {
     del.type = 'button';
     del.addEventListener('click', () => askDelete(p));
 
-    if (can.write()) wrap.append(edit);
-    if (can.remove()) wrap.append(del);
+    if (can.product()) wrap.append(edit, del);
     actions.append(wrap);
 
     tr.append(
@@ -1747,13 +1922,12 @@ async function loadSuppliers() {
 
       const actions = el('td');
       const wrap = el('div', 'row-actions');
-      if (can.write()) {
+      if (can.supplier()) {
         const edit = el('button', 'btn ghost', 'Edit');
         edit.type = 'button';
         edit.addEventListener('click', () => openSupForm(sp));
         wrap.append(edit);
-      }
-      if (can.remove()) {
+
         const del = el('button', 'btn ghost del', 'Hapus');
         del.type = 'button';
         del.addEventListener('click', () => {
@@ -1922,7 +2096,7 @@ async function loadPurchases() {
       view.type = 'button';
       view.addEventListener('click', () => viewPurchase(po.id));
       wrap.append(view);
-      if (can.write() && po.status === 'pending') {
+      if (can.purchase() && po.status === 'pending') {
         const recv = el('button', 'btn ghost', 'Terima');
         recv.type = 'button';
         recv.addEventListener('click', () => poAction(po, 'receive', 'Barang diterima, stok diperbarui'));
@@ -2087,6 +2261,227 @@ $('#poForm').addEventListener('submit', async (event) => {
     button.disabled = false;
   }
 });
+
+/* ---------- keuangan ---------- */
+
+const finState = { tab: 'cash', page: 1, limit: 8, totalPages: 1 };
+const FIN_CATS = {
+  in: ['Penjualan', 'Pendapatan lain', 'Modal', 'Pinjaman'],
+  out: ['Gaji', 'Operasional', 'Beban lain', 'Pembayaran pinjaman', 'Prive'],
+};
+const isoDate = (d) => {
+  const z = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+};
+const finDate = (s) => new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(s + 'T00:00:00'));
+const finRange = () => new URLSearchParams({ from: $('#finFrom').value, to: $('#finTo').value });
+
+function finInitDates() {
+  const now = new Date();
+  $('#finFrom').value = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  $('#finTo').value = isoDate(now);
+}
+
+// baris tabel laporan: [label, jumlah, gaya] gaya: '', 'sub' (inden), 'total'
+function finTable(tbody, rows) {
+  tbody.replaceChildren();
+  for (const [label, amount, style] of rows) {
+    const tr = el('tr', style === 'total' ? 'fin-total' : style === 'head' ? 'fin-head' : '');
+    const l = el('td', style === 'sub' ? 'fin-sub' : '', label);
+    const a = el('td', 'r num', amount === null ? '' : rupiah(amount));
+    tr.append(l, a);
+    tbody.append(tr);
+  }
+}
+
+async function loadFinance() {
+  if (!can.page('finance')) return;
+  const from = $('#finFrom').value, to = $('#finTo').value;
+  if (!from || !to || to < from) { toast('Rentang tanggal tidak valid.'); return; }
+
+  document.querySelectorAll('#finTabs .chip').forEach((c) => c.classList.toggle('on', c.dataset.tab === finState.tab));
+  $('#finCash').classList.toggle('hidden', finState.tab !== 'cash');
+  $('#finPL').classList.toggle('hidden', finState.tab !== 'pl');
+  $('#finBS').classList.toggle('hidden', finState.tab !== 'bs');
+  $('#btnAddTx').classList.toggle('hidden', finState.tab !== 'cash');
+  $('#finFromWrap').classList.toggle('hidden', finState.tab === 'bs');
+
+  try {
+    const { data } = await api(`/api/v1/finance/reports?${finRange()}`);
+    const cf = data.cashflow, is = data.income_statement, bs = data.balance_sheet;
+
+    $('#cfOpening').textContent = rupiah(cf.opening);
+    $('#cfIn').textContent = rupiah(cf.total_in);
+    $('#cfOut').textContent = rupiah(cf.total_out);
+    $('#cfClosing').textContent = rupiah(cf.closing);
+
+    const cfRows = [['Arus kas dari operasi', null, 'head']];
+    cf.operating_in.forEach((x) => cfRows.push([x.category, x.amount, 'sub']));
+    cf.operating_out.forEach((x) => cfRows.push([x.category, -x.amount, 'sub']));
+    cfRows.push(['Kas bersih dari operasi', cf.operating, 'total']);
+    cfRows.push(['Arus kas dari pendanaan', null, 'head']);
+    cf.financing_in.forEach((x) => cfRows.push([x.category, x.amount, 'sub']));
+    cf.financing_out.forEach((x) => cfRows.push([x.category, -x.amount, 'sub']));
+    cfRows.push(['Kas bersih dari pendanaan', cf.financing, 'total']);
+    cfRows.push(['Kenaikan (penurunan) kas', cf.operating + cf.financing, 'total']);
+    finTable($('#cfRows'), cfRows);
+
+    const plRows = [['Pendapatan', null, 'head']];
+    is.revenue.forEach((x) => plRows.push([x.category, x.amount, 'sub']));
+    plRows.push(['Total pendapatan', is.revenue_total, 'total']);
+    plRows.push(['Beban', null, 'head']);
+    is.expense.forEach((x) => plRows.push([x.category, x.amount, 'sub']));
+    plRows.push(['Total beban', is.expense_total, 'total']);
+    plRows.push([is.net_income >= 0 ? 'Laba bersih' : 'Rugi bersih', is.net_income, 'total']);
+    finTable($('#plRows'), plRows);
+
+    finTable($('#bsAssets'), [
+      ['Kas', bs.cash, 'sub'],
+      ['Persediaan (harga × stok)', bs.inventory, 'sub'],
+      ['Total aset', bs.assets, 'total'],
+    ]);
+    finTable($('#bsEquity'), [
+      ['Liabilitas', null, 'head'],
+      ['Pinjaman', bs.liabilities, 'sub'],
+      ['Ekuitas', null, 'head'],
+      ['Modal (setelah prive)', bs.capital, 'sub'],
+      ['Laba (rugi) ditahan', bs.retained, 'sub'],
+      ['Selisih penilaian persediaan', bs.revaluation, 'sub'],
+      ['Total liabilitas & ekuitas', bs.liabilities_equity, 'total'],
+    ]);
+    $('#bsNote').textContent = `Neraca per ${finDate(data.to)}. Persediaan dihitung dari harga jual × stok saat ini.`;
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  }
+  if (finState.tab === 'cash') loadTransactions();
+}
+
+async function loadTransactions() {
+  const q = finRange();
+  q.set('page', finState.page);
+  q.set('limit', finState.limit);
+  const tbody = $('#txRows');
+  try {
+    const r = await api(`/api/v1/finance/transactions?${q}`);
+    const m = r.meta || {};
+    finState.page = Number(m.page) || 1;
+    finState.totalPages = Math.max(Number(m.total_pages) || 1, 1);
+    $('#txInfo').textContent = `Halaman ${finState.page} dari ${finState.totalPages}`;
+    $('#txPrev').disabled = finState.page <= 1;
+    $('#txNext').disabled = finState.page >= finState.totalPages;
+
+    tbody.replaceChildren();
+    const items = r.data || [];
+    if (!items.length) {
+      const tr = el('tr');
+      const td = el('td', 'empty', 'Belum ada transaksi pada rentang ini.');
+      td.colSpan = 5;
+      tr.append(td);
+      tbody.append(tr);
+      return;
+    }
+    for (const t of items) {
+      const tr = el('tr');
+      const desc = el('td');
+      desc.append(el('div', 'pname', t.category));
+      if (t.description) desc.append(el('div', 'pdesc', t.description));
+      const amount = el('td', 'r num ' + (t.type === 'in' ? 'amt-in' : 'amt-out'),
+        (t.type === 'in' ? '+ ' : '− ') + rupiah(t.amount));
+      const act = el('td');
+      const wrap = el('div', 'row-actions');
+      if (t.auto) {
+        wrap.append(el('span', 'badge', 'Otomatis'));
+      } else {
+        const del = el('button', 'btn ghost del', 'Hapus');
+        del.type = 'button';
+        del.addEventListener('click', async () => {
+          if (!confirm('Hapus transaksi ini?')) return;
+          try { await api(`/api/v1/finance/transactions/${t.id}`, { method: 'DELETE' }); toast('Transaksi dihapus'); }
+          catch (e) { toast(e.message); }
+          loadFinance();
+        });
+        wrap.append(del);
+      }
+      act.append(wrap);
+      tr.append(el('td', 'hide-sm', finDate(t.date)), desc, el('td', 'hide-md', t.type === 'in' ? 'Kas masuk' : 'Kas keluar'), amount, act);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  }
+}
+
+function fillTxCategories() {
+  const f = $('#txForm');
+  const sel = f.elements.category;
+  sel.replaceChildren();
+  for (const c of FIN_CATS[f.elements.type.value]) {
+    const o = el('option', '', c);
+    o.value = c;
+    sel.append(o);
+  }
+}
+
+$('#finTabs').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  finState.tab = chip.dataset.tab;
+  finState.page = 1;
+  loadFinance();
+});
+$('#finFrom').addEventListener('change', () => { finState.page = 1; loadFinance(); });
+$('#finTo').addEventListener('change', () => { finState.page = 1; loadFinance(); });
+$('#txPrev').addEventListener('click', () => { if (finState.page > 1) { finState.page--; loadTransactions(); } });
+$('#txNext').addEventListener('click', () => { if (finState.page < finState.totalPages) { finState.page++; loadTransactions(); } });
+
+$('#btnAddTx').addEventListener('click', () => {
+  clearErrors();
+  const f = $('#txForm');
+  f.reset();
+  f.elements.date.value = isoDate(new Date());
+  fillTxCategories();
+  $('#dlgTx').showModal();
+});
+$('#txForm').elements.type.addEventListener('change', fillTxCategories);
+$('#txCancel').addEventListener('click', () => $('#dlgTx').close());
+
+$('#txForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearErrors();
+  const f = event.currentTarget;
+  const button = $('#txSave');
+  button.disabled = true;
+  try {
+    await api('/api/v1/finance/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: f.elements.date.value,
+        type: f.elements.type.value,
+        category: f.elements.category.value,
+        description: f.elements.description.value.trim(),
+        amount: Math.round(Number(f.elements.amount.value)),
+      }),
+    });
+    $('#dlgTx').close();
+    toast('Transaksi berhasil dicatat');
+    finState.page = 1;
+    await loadFinance();
+  } catch (error) {
+    if (error.status === 401) { $('#dlgTx').close(); showLogin(); return; }
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = f.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
+    }
+    if (!Object.keys(error.fields || {}).length) $('#txFormErr').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+finInitDates();
 
 /* ---------- pengguna (admin) ---------- */
 

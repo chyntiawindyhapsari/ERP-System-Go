@@ -18,7 +18,7 @@ func NewSupplierHandler(pool *pgxpool.Pool) *SupplierHandler {
 	return &SupplierHandler{pool: pool}
 }
 
-// Hak akses dijaga di router: baca = semua role, tulis = admin/manager, hapus = admin.
+// Hak akses (dijaga di router): baca = admin/supplier/kasir, tulis = admin/supplier.
 func (h *SupplierHandler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/suppliers", h.List)
 	mux.HandleFunc("GET /api/v1/suppliers/{id}", h.Get)

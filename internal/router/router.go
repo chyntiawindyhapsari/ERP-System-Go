@@ -46,27 +46,38 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 	handler.NewUserHandler(pool).Register(protectedAPI)
 	handler.NewSupplierHandler(pool).Register(protectedAPI)
 	handler.NewPurchaseHandler(pool).Register(protectedAPI)
+	handler.NewFinanceHandler(pool).Register(protectedAPI)
 
-	// Hak akses per role:
-	//  - produk: semua role boleh lihat; admin & manager boleh tambah/ubah; hanya admin boleh hapus
-	//  - supplier: aturan sama dengan produk
+	// Hak akses per role (admin selalu boleh semuanya):
+	//  - produk (& persediaan): gudang kelola penuh; kasir hanya lihat (untuk form pembelian)
+	//  - supplier: role supplier kelola penuh; kasir hanya lihat (untuk form pembelian)
+	//  - pembelian: kasir kelola penuh
+	//  - keuangan (arus kas, laba rugi, neraca): role keuangan
 	//  - pengguna: hanya admin
-	adminOnly := middleware.RequireRole("admin")
-	canWrite := middleware.RequireRole("admin", "manager")
+	type rule struct {
+		prefix string
+		read   []string // boleh GET
+		write  []string // boleh POST/PUT/PATCH/DELETE
+	}
+	rules := []rule{
+		{"/api/v1/users", []string{"admin"}, []string{"admin"}},
+		{"/api/v1/products", []string{"admin", "gudang", "kasir"}, []string{"admin", "gudang"}},
+		{"/api/v1/suppliers", []string{"admin", "supplier", "kasir"}, []string{"admin", "supplier"}},
+		{"/api/v1/purchases", []string{"admin", "kasir"}, []string{"admin", "kasir"}},
+		{"/api/v1/finance", []string{"admin", "keuangan"}, []string{"admin", "keuangan"}},
+	}
 	authorized := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var h http.Handler = protectedAPI
-		switch {
-		case strings.HasPrefix(r.URL.Path, "/api/v1/users"):
-			h = adminOnly(h)
-		case strings.HasPrefix(r.URL.Path, "/api/v1/products"),
-			strings.HasPrefix(r.URL.Path, "/api/v1/suppliers"),
-			strings.HasPrefix(r.URL.Path, "/api/v1/purchases"):
-			switch r.Method {
-			case http.MethodPost, http.MethodPut, http.MethodPatch:
-				h = canWrite(h)
-			case http.MethodDelete:
-				h = adminOnly(h)
+		for _, ru := range rules {
+			if !strings.HasPrefix(r.URL.Path, ru.prefix) {
+				continue
 			}
+			roles := ru.write
+			if r.Method == http.MethodGet || r.Method == http.MethodHead {
+				roles = ru.read
+			}
+			h = middleware.RequireRole(roles...)(h)
+			break
 		}
 		h.ServeHTTP(w, r)
 	})

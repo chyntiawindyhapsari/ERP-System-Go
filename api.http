@@ -60,16 +60,16 @@ GET http://localhost:8080/api/v1/users
 POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
-{"username":"budi","password":"rahasia123","full_name":"Budi Santoso","role":"manager"}
+{"username":"budi","password":"rahasia123","full_name":"Budi Santoso","role":"gudang"}
 
 ### Ubah role / nonaktifkan (admin)
 PUT http://localhost:8080/api/v1/users/2
 Content-Type: application/json
 
-{"role":"staff","is_active":true}
+{"role":"kasir","is_active":true}
 
 
-### --- Supplier (baca: semua role, tulis: admin/manager, hapus: admin) ---
+### --- Supplier (role: supplier & admin; kasir hanya baca) ---
 
 ### Daftar (search, status=active|inactive, page, limit)
 GET http://localhost:8080/api/v1/suppliers?page=1&limit=8&search=jakarta&status=active
@@ -90,7 +90,7 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/v1/suppliers/1
 
 
-### --- Pembelian (baca: semua role; buat/terima/batal: admin/manager) ---
+### --- Pembelian (role: kasir & admin) ---
 
 ### Daftar (status=pending|received|cancelled)
 GET http://localhost:8080/api/v1/purchases?status=pending
@@ -106,3 +106,24 @@ POST http://localhost:8080/api/v1/purchases/1/receive
 
 ### Batalkan
 POST http://localhost:8080/api/v1/purchases/1/cancel
+
+
+### --- Keuangan (role: keuangan & admin) ---
+
+### Laporan (arus kas, laba rugi, neraca)
+GET http://localhost:8080/api/v1/finance/reports?from=2026-10-01&to=2026-10-31
+
+### Catat modal awal
+POST http://localhost:8080/api/v1/finance/transactions
+Content-Type: application/json
+
+{"date":"2026-10-01","type":"in","category":"Modal","description":"Modal awal","amount":50000000}
+
+### Catat biaya operasional
+POST http://localhost:8080/api/v1/finance/transactions
+Content-Type: application/json
+
+{"date":"2026-10-05","type":"out","category":"Operasional","description":"Sewa gudang","amount":3000000}
+
+### Daftar transaksi
+GET http://localhost:8080/api/v1/finance/transactions?from=2026-10-01&to=2026-10-31

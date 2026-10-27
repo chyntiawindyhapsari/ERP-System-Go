@@ -21,7 +21,7 @@ func NewPurchaseHandler(pool *pgxpool.Pool) *PurchaseHandler {
 	return &PurchaseHandler{pool: pool}
 }
 
-// Baca = semua role; buat/terima/batalkan = admin & manager (dijaga di router).
+// Hak akses (dijaga di router): admin & kasir.
 func (h *PurchaseHandler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/purchases", h.List)
 	mux.HandleFunc("GET /api/v1/purchases/{id}", h.Get)
@@ -266,6 +266,15 @@ func (h *PurchaseHandler) Receive(w http.ResponseWriter, r *http.Request) {
 		FROM purchase_order_items i
 		WHERE i.purchase_order_id = $1 AND i.product_id = p.id`, id); err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal menambah stok")
+		return
+	}
+	// Pembelian dianggap dibayar tunai saat barang diterima -> tercatat sebagai kas keluar.
+	if _, err := tx.Exec(r.Context(), `
+		INSERT INTO cash_transactions (tx_date, type, category, description, amount, purchase_order_id)
+		SELECT CURRENT_DATE, 'out', 'Pembelian barang', 'PO-' || LPAD(po.id::text, 4, '0') || ' · ' || s.name, po.total, po.id
+		FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id
+		WHERE po.id = $1 AND po.total > 0`, id); err != nil {
+		writeError(w, http.StatusInternalServerError, "Gagal mencatat kas keluar")
 		return
 	}
 	if _, err := tx.Exec(r.Context(),

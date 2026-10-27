@@ -103,11 +103,13 @@ Contoh response validasi gagal (HTTP 422):
 
 ## Role & Pengguna
 
-| Role      | Akses |
-|-----------|-------|
-| `admin`   | Semua, termasuk kelola pengguna & hapus produk |
-| `manager` | Lihat, tambah, dan ubah produk |
-| `staff`   | Hanya lihat |
+| Role       | Menu yang tampil | Hak akses |
+|------------|------------------|-----------|
+| `admin`    | Semua | Semua fitur, termasuk kelola pengguna |
+| `gudang`   | Ringkasan, Produk, Persediaan | Kelola produk |
+| `supplier` | Supplier | Kelola data supplier |
+| `kasir`    | Pembelian | Buat, terima, dan batalkan pembelian (hanya bisa *melihat* produk & supplier untuk mengisi form) |
+| `keuangan` | Keuangan | Catat transaksi kas, lihat arus kas, laba rugi, dan neraca |
 
 Admin dari `.env` otomatis berole `admin`. Admin bisa membuat pengguna baru (tersimpan di tabel `users`) lewat menu **Pengguna** atau endpoint:
 
@@ -119,7 +121,7 @@ Admin dari `.env` otomatis berole `admin`. Admin bisa membuat pengguna baru (ter
 
 ## Modul Supplier
 
-CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif) dengan pencarian, filter status, dan pagination. Akses sama seperti produk: semua role boleh lihat, admin/manager boleh tambah & ubah, hanya admin boleh hapus.
+CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif) dengan pencarian, filter status, dan pagination. Dikelola oleh role `supplier` dan `admin` (kasir hanya bisa melihat untuk form pembelian).
 
 | Method | Path                      | Keterangan                                   |
 |--------|---------------------------|----------------------------------------------|
@@ -131,7 +133,7 @@ CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif
 
 ## Modul Pembelian
 
-Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status: **Menunggu** → **Diterima** (stok produk otomatis bertambah dalam satu transaksi database) atau **Dibatalkan**. Semua role boleh lihat; admin/manager boleh membuat, menerima, dan membatalkan. Supplier/produk yang sudah punya riwayat pembelian tidak bisa dihapus (supplier cukup dinonaktifkan).
+Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status: **Menunggu** → **Diterima** (stok produk otomatis bertambah dalam satu transaksi database) atau **Dibatalkan**. Dikelola oleh role `kasir` dan `admin`. Supplier/produk yang sudah punya riwayat pembelian tidak bisa dihapus (supplier cukup dinonaktifkan).
 
 | Method | Path                             | Keterangan                         |
 |--------|----------------------------------|------------------------------------|
@@ -140,6 +142,25 @@ Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status:
 | POST   | `/api/v1/purchases`              | Buat pembelian                     |
 | POST   | `/api/v1/purchases/{id}/receive` | Terima barang, tambah stok         |
 | POST   | `/api/v1/purchases/{id}/cancel`  | Batalkan                           |
+
+## Modul Keuangan
+
+Menu **Keuangan** (role `keuangan` dan `admin`) berisi tiga laporan dengan filter tanggal:
+
+- **Arus kas** – saldo awal/akhir, kas dari operasi & pendanaan, dan daftar transaksi.
+- **Laba rugi** – pendapatan dikurangi beban pada periode terpilih.
+- **Neraca** – aset (kas + persediaan) = liabilitas + ekuitas, per tanggal "sampai".
+
+Transaksi kas dicatat manual (kas masuk: Penjualan, Pendapatan lain, Modal, Pinjaman; kas keluar: Gaji, Operasional, Beban lain, Pembayaran pinjaman, Prive). Saat pembelian **diterima**, kas keluar "Pembelian barang" tercatat otomatis (dianggap dibayar tunai) dan tidak bisa dihapus manual. Pembelian barang tidak dihitung sebagai beban, melainkan menambah persediaan.
+
+Catatan penyederhanaan: persediaan di neraca dihitung dari harga jual × stok saat ini, dan selisihnya terhadap total pembelian muncul sebagai "Selisih penilaian persediaan" di ekuitas.
+
+| Method | Path                                    | Keterangan                          |
+|--------|-----------------------------------------|-------------------------------------|
+| GET    | `/api/v1/finance/reports?from=&to=`     | Arus kas, laba rugi, neraca         |
+| GET    | `/api/v1/finance/transactions`          | Daftar transaksi (`from`, `to`, `page`, `limit`) |
+| POST   | `/api/v1/finance/transactions`          | Catat transaksi kas                 |
+| DELETE | `/api/v1/finance/transactions/{id}`     | Hapus transaksi manual              |
 
 ## Menjalankan Test
 

@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var validRoles = map[string]bool{"admin": true, "manager": true, "staff": true}
+var validRoles = map[string]bool{"admin": true, "gudang": true, "supplier": true, "kasir": true, "keuangan": true}
 
 type UserHandler struct {
 	pool *pgxpool.Pool
@@ -89,7 +89,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		fields["full_name"] = "nama maksimal 100 karakter"
 	}
 	if !validRoles[in.Role] {
-		fields["role"] = "role harus admin, manager, atau staff"
+		fields["role"] = "role harus admin, gudang, supplier, kasir, atau keuangan"
 	}
 	if len(fields) > 0 {
 		writeJSON(w, http.StatusUnprocessableEntity, Response{
@@ -144,7 +144,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !validRoles[in.Role] {
-		writeError(w, http.StatusUnprocessableEntity, "role harus admin, manager, atau staff")
+		writeError(w, http.StatusUnprocessableEntity, "role harus admin, gudang, supplier, kasir, atau keuangan")
 		return
 	}
 	if me, ok := middleware.UserFrom(r.Context()); ok && me.ID == id && (in.Role != "admin" || !in.IsActive) {
