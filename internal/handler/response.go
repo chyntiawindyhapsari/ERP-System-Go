@@ -53,7 +53,7 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, models.ErrNotFound):
 		writeError(w, http.StatusNotFound, "data tidak ditemukan")
 	case isForeignKeyViolation(err):
-		writeError(w, http.StatusConflict, "data masih dipakai di pembelian, tidak bisa dihapus")
+		writeError(w, http.StatusConflict, "data masih dipakai di pembelian atau penjualan, tidak bisa dihapus")
 	default:
 		log.Printf("internal error: %v", err)
 		writeError(w, http.StatusInternalServerError, "terjadi kesalahan pada server")

@@ -47,11 +47,12 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 	handler.NewSupplierHandler(pool).Register(protectedAPI)
 	handler.NewPurchaseHandler(pool).Register(protectedAPI)
 	handler.NewFinanceHandler(pool).Register(protectedAPI)
+	handler.NewSaleHandler(pool).Register(protectedAPI)
 
 	// Hak akses per role (admin selalu boleh semuanya):
 	//  - produk (& persediaan): gudang kelola penuh; kasir hanya lihat (untuk form pembelian)
 	//  - supplier: role supplier kelola penuh; kasir hanya lihat (untuk form pembelian)
-	//  - pembelian: kasir kelola penuh
+	//  - pembelian & penjualan: kasir kelola penuh
 	//  - keuangan (arus kas, laba rugi, neraca): role keuangan
 	//  - pengguna: hanya admin
 	type rule struct {
@@ -64,6 +65,7 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 		{"/api/v1/products", []string{"admin", "gudang", "kasir"}, []string{"admin", "gudang"}},
 		{"/api/v1/suppliers", []string{"admin", "supplier", "kasir"}, []string{"admin", "supplier"}},
 		{"/api/v1/purchases", []string{"admin", "kasir"}, []string{"admin", "kasir"}},
+		{"/api/v1/sales", []string{"admin", "kasir"}, []string{"admin", "kasir"}},
 		{"/api/v1/finance", []string{"admin", "keuangan"}, []string{"admin", "keuangan"}},
 	}
 	authorized := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

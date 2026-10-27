@@ -127,3 +127,18 @@ Content-Type: application/json
 
 ### Daftar transaksi
 GET http://localhost:8080/api/v1/finance/transactions?from=2026-10-01&to=2026-10-31
+
+
+### --- Penjualan (role: kasir & admin) ---
+
+### Catat penjualan (harga diambil dari database)
+POST http://localhost:8080/api/v1/sales
+Content-Type: application/json
+
+{"customer_name":"Budi","payment_method":"tunai","notes":"","items":[{"product_id":1,"quantity":2}]}
+
+### Daftar
+GET http://localhost:8080/api/v1/sales?status=completed
+
+### Batalkan (stok kembali, kas masuk dihapus)
+POST http://localhost:8080/api/v1/sales/1/cancel

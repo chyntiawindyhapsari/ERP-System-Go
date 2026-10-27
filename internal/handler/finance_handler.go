@@ -112,7 +112,7 @@ func (h *FinanceHandler) ListTransactions(w http.ResponseWriter, r *http.Request
 	}
 	rows, err := h.pool.Query(r.Context(), `
 		SELECT id, tx_date::text, type, category, description, amount,
-		       purchase_order_id IS NOT NULL, created_at
+		       (purchase_order_id IS NOT NULL OR sale_id IS NOT NULL), created_at
 		FROM cash_transactions WHERE tx_date BETWEEN $1 AND $2
 		ORDER BY tx_date DESC, id DESC LIMIT $3 OFFSET $4`, from, to, limit, (page-1)*limit)
 	if err != nil {
@@ -193,7 +193,7 @@ func (h *FinanceHandler) CreateTransaction(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusCreated, Response{Success: true, Message: "transaksi berhasil dicatat", Data: t})
 }
 
-// Transaksi otomatis dari pembelian tidak boleh dihapus manual.
+// Transaksi otomatis dari pembelian/penjualan tidak boleh dihapus manual.
 func (h *FinanceHandler) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	id, ok := supplierID(r)
 	if !ok {
@@ -201,13 +201,13 @@ func (h *FinanceHandler) DeleteTransaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	tag, err := h.pool.Exec(r.Context(),
-		`DELETE FROM cash_transactions WHERE id = $1 AND purchase_order_id IS NULL`, id)
+		`DELETE FROM cash_transactions WHERE id = $1 AND purchase_order_id IS NULL AND sale_id IS NULL`, id)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Gagal menghapus transaksi")
 		return
 	}
 	if tag.RowsAffected() == 0 {
-		writeError(w, http.StatusConflict, "transaksi tidak ditemukan atau berasal dari pembelian otomatis")
+		writeError(w, http.StatusConflict, "transaksi tidak ditemukan atau berasal dari pembelian/penjualan otomatis")
 		return
 	}
 	writeJSON(w, http.StatusOK, Response{Success: true, Message: "transaksi dihapus"})

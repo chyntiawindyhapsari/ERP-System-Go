@@ -473,6 +473,7 @@
   #finPL, #finBS, #finCash { margin-bottom: 8px; }
   #finCash .two-col { grid-template-columns: 1fr; }
   @media (min-width: 1700px) { #finCash .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .sale-price { text-align: right; color: var(--ink-2); font-size: .92rem; padding: 0 4px; white-space: nowrap; }
   .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
   .check input { width: 16px; height: 16px; accent-color: var(--accent); }
   select.input { appearance: auto; }
@@ -524,6 +525,7 @@
   @media (max-width: 560px) {
     .po-item { grid-template-columns: 1fr 1fr auto; }
     .po-item select { grid-column: 1 / -1; }
+    .sale-price { text-align: left; }
     .toolbar .btn, .toolbar .chips { width: 100%; }
     .toolbar .btn { justify-content: center; }
   }
@@ -555,6 +557,7 @@
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2 .7 3.5 2.6 3.5 5.7"/></symbol>
     <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2 11h10.5l2-8H6.5"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></symbol>
     <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></symbol>
     <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></symbol>
   </defs>
 </svg>
@@ -627,6 +630,9 @@
       </button>
       <button type="button" class="nav-item" data-page="suppliers">
         <svg class="i"><use href="#i-truck"/></svg>Supplier
+      </button>
+      <button type="button" class="nav-item" data-page="sales">
+        <svg class="i"><use href="#i-receipt"/></svg>Penjualan
       </button>
       <button type="button" class="nav-item" data-page="purchases">
         <svg class="i"><use href="#i-cart"/></svg>Pembelian
@@ -802,6 +808,45 @@
       </div>
     </section>
 
+    <!-- PENJUALAN -->
+
+    <section id="salesPage" class="hidden">
+      <div class="card">
+        <div class="toolbar">
+          <div class="chips" id="saleChips">
+            <button type="button" class="chip on" data-status="">Semua</button>
+            <button type="button" class="chip" data-status="completed">Selesai</button>
+            <button type="button" class="chip" data-status="cancelled">Dibatalkan</button>
+          </div>
+          <button type="button" id="btnAddSale" class="btn" style="margin-left:auto">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Penjualan baru
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th class="hide-sm">Pelanggan</th>
+                <th class="hide-md">Tanggal</th>
+                <th class="r">Total</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="saleRows"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="saleInfo">Halaman 1</span>
+          <div>
+            <button type="button" class="btn ghost sm" id="salePrev">Sebelumnya</button>
+            <button type="button" class="btn ghost sm" id="saleNext">Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- PEMBELIAN -->
 
     <section id="purchasesPage" class="hidden">
@@ -935,7 +980,7 @@
     <section id="usersPage" class="hidden">
       <div class="card">
         <div class="toolbar">
-          <div class="hint">Kelola akun dan role. Administrator: semua fitur · Gudang: produk &amp; persediaan · Supplier: data supplier · Kasir: pembelian · Keuangan: arus kas, laba rugi, neraca.</div>
+          <div class="hint">Kelola akun dan role. Administrator: semua fitur · Gudang: produk &amp; persediaan · Supplier: data supplier · Kasir: penjualan &amp; pembelian · Keuangan: arus kas, laba rugi, neraca.</div>
           <button type="button" id="btnAddUser" class="btn">
             <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Tambah pengguna
           </button>
@@ -996,6 +1041,53 @@
     <div class="form-actions">
       <button type="button" class="btn ghost" id="btnCancel">Batal</button>
       <button type="submit" class="btn" id="btnSave">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- FORM PENJUALAN -->
+
+<dialog id="dlgSale">
+  <form id="saleForm" class="dlg-form" novalidate>
+    <h2>Penjualan baru</h2>
+
+    <div class="form-row">
+      <label class="field">
+        Pelanggan (opsional)
+        <input class="input" name="customer_name" maxlength="100" autocomplete="off" placeholder="Umum">
+        <span class="err" data-for="customer_name"></span>
+      </label>
+      <label class="field">
+        Pembayaran
+        <select class="input" name="payment_method">
+          <option value="tunai">Tunai</option>
+          <option value="transfer">Transfer</option>
+          <option value="qris">QRIS</option>
+        </select>
+        <span class="err" data-for="payment_method"></span>
+      </label>
+    </div>
+
+    <div class="field">
+      Item
+      <div id="saleItems" class="po-items"></div>
+      <button type="button" class="btn ghost sm" id="saleAddItem" style="justify-self:start">+ Tambah item</button>
+      <span class="err" data-for="items"></span>
+    </div>
+
+    <label class="field">
+      Catatan
+      <textarea class="input" name="notes" rows="2" maxlength="500"></textarea>
+      <span class="err" data-for="notes"></span>
+    </label>
+
+    <div class="po-total">Total <b class="num" id="saleTotal">Rp0</b></div>
+
+    <div class="err" id="saleFormErr" role="alert"></div>
+
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="saleCancelForm">Batal</button>
+      <button type="submit" class="btn" id="saleSave">Simpan</button>
     </div>
   </form>
 </dialog>
@@ -1194,7 +1286,7 @@
       <label class="field">
         Role
         <select class="input" name="role">
-          <option value="kasir">Kasir (pembelian)</option>
+          <option value="kasir">Kasir (penjualan &amp; pembelian)</option>
           <option value="supplier">Supplier (data supplier)</option>
           <option value="gudang">Gudang (produk &amp; persediaan)</option>
           <option value="keuangan">Keuangan (arus kas, neraca)</option>
@@ -1236,10 +1328,10 @@ const ROLE_LABEL = { admin: 'Administrator', gudang: 'Gudang', supplier: 'Suppli
 
 // Menu yang boleh dibuka tiap role (admin = semua).
 const ROLE_PAGES = {
-  admin: ['dashboard', 'products', 'inventory', 'suppliers', 'purchases', 'finance', 'users'],
+  admin: ['dashboard', 'products', 'inventory', 'suppliers', 'sales', 'purchases', 'finance', 'users'],
   gudang: ['dashboard', 'products', 'inventory'],
   supplier: ['suppliers'],
-  kasir: ['purchases'],
+  kasir: ['sales', 'purchases'],
   keuangan: ['finance'],
 };
 const roleIs = (...r) => !!state.user && r.includes(state.user.role);
@@ -1248,6 +1340,7 @@ const can = {
   product: () => roleIs('admin', 'gudang'),       // tambah/ubah/hapus produk
   supplier: () => roleIs('admin', 'supplier'),    // tambah/ubah/hapus supplier
   purchase: () => roleIs('admin', 'kasir'),       // buat/terima/batalkan pembelian
+  sale: () => roleIs('admin', 'kasir'),           // catat/batalkan penjualan
   users: () => roleIs('admin'),
   // Data yang dimuat sebagai bahan form/ringkasan
   readProducts: () => roleIs('admin', 'gudang', 'kasir'),
@@ -1282,6 +1375,7 @@ let deletingSupplier = null;
 let editingSup = null;
 const supState = { page: 1, limit: 8, search: '', status: '', totalPages: 1, total: 0, active: 0 };
 let supTimer;
+const saleState = { page: 1, limit: 8, status: '', totalPages: 1, total: 0, today: 0 };
 const poState = { page: 1, limit: 8, status: '', totalPages: 1, total: 0, pending: 0 };
 let toastTimer;
 let searchTimer;
@@ -1370,6 +1464,7 @@ async function showApp(user) {
   $('#btnAdd').classList.toggle('hidden', !can.product());
   $('#btnAddSup').classList.toggle('hidden', !can.supplier());
   $('#btnAddPo').classList.toggle('hidden', !can.purchase());
+  $('#btnAddSale').classList.toggle('hidden', !can.sale());
 
   $('#loginScreen').classList.add('hidden');
   $('#appScreen').classList.remove('hidden');
@@ -1377,6 +1472,7 @@ async function showApp(user) {
   setPage(ROLE_PAGES[user.role][0]);
   if (can.readProducts()) await refreshAll();
   if (can.page('suppliers')) loadSuppliers();
+  if (can.page('sales')) loadSales();
   if (can.page('purchases')) loadPurchases();
   if (can.page('finance')) loadFinance();
   if (can.users()) loadUsers();
@@ -1456,6 +1552,7 @@ const PAGES = {
   products: ['productsPage', 'Manajemen Produk'],
   inventory: ['inventoryPage', 'Persediaan Barang'],
   suppliers: ['suppliersPage', 'Manajemen Supplier'],
+  sales: ['salesPage', 'Penjualan'],
   purchases: ['purchasesPage', 'Pembelian Barang'],
   finance: ['financePage', 'Keuangan'],
   users: ['usersPage', 'Manajemen Pengguna'],
@@ -1485,6 +1582,7 @@ function updateSummary() {
     case 'products': s.textContent = `${nf.format(total)} produk tersimpan`; break;
     case 'inventory': s.textContent = 'Pantau ketersediaan barang secara langsung'; break;
     case 'suppliers': s.textContent = `${nf.format(supState.total)} supplier · ${nf.format(supState.active)} aktif`; break;
+    case 'sales': s.textContent = `${nf.format(saleState.total)} penjualan · hari ini ${rupiah(saleState.today)}`; break;
     case 'purchases': s.textContent = `${nf.format(poState.total)} pembelian · ${nf.format(poState.pending)} menunggu diterima`; break;
     case 'finance': s.textContent = 'Arus kas, laba rugi, dan neraca'; break;
     case 'users': s.textContent = 'Akun dan hak akses'; break;
@@ -2482,6 +2580,215 @@ $('#txForm').addEventListener('submit', async (event) => {
 });
 
 finInitDates();
+
+/* ---------- penjualan ---------- */
+
+const SALE_STATUS = { completed: ['Selesai', 'ok'], cancelled: ['Dibatalkan', 'bad'] };
+const PAY_LABEL = { tunai: 'Tunai', transfer: 'Transfer', qris: 'QRIS' };
+const invNo = (id) => 'INV-' + String(id).padStart(4, '0');
+
+async function loadSales() {
+  const q = new URLSearchParams({ page: saleState.page, limit: saleState.limit });
+  if (saleState.status) q.set('status', saleState.status);
+  const tbody = $('#saleRows');
+  try {
+    const r = await api(`/api/v1/sales?${q}`);
+    const m = r.meta || {};
+    saleState.total = Number(m.total) || 0;
+    saleState.today = Number(m.revenue_today) || 0;
+    saleState.page = Number(m.page) || 1;
+    saleState.totalPages = Math.max(Number(m.total_pages) || 1, 1);
+    $('#saleInfo').textContent = `Halaman ${saleState.page} dari ${saleState.totalPages}`;
+    $('#salePrev').disabled = saleState.page <= 1;
+    $('#saleNext').disabled = saleState.page >= saleState.totalPages;
+    updateSummary();
+
+    tbody.replaceChildren();
+    const items = r.data || [];
+    if (!items.length) {
+      const tr = el('tr');
+      const td = el('td', 'empty', 'Belum ada penjualan.');
+      td.colSpan = 6;
+      tr.append(td);
+      tbody.append(tr);
+      return;
+    }
+    for (const s of items) {
+      const tr = el('tr');
+      const no = el('td');
+      const num = el('div', 'pname', invNo(s.id));
+      num.style.whiteSpace = 'nowrap';
+      no.append(num, el('div', 'pdesc', s.item_count + ' item · ' + (PAY_LABEL[s.payment_method] || s.payment_method)));
+
+      const st = SALE_STATUS[s.status] || [s.status, ''];
+      const status = el('td');
+      status.append(el('span', 'badge ' + st[1], st[0]));
+
+      const actions = el('td');
+      const wrap = el('div', 'row-actions');
+      const view = el('button', 'btn ghost', 'Detail');
+      view.type = 'button';
+      view.addEventListener('click', () => viewSale(s.id));
+      wrap.append(view);
+      if (can.sale() && s.status === 'completed') {
+        const cancel = el('button', 'btn ghost del', 'Batal');
+        cancel.type = 'button';
+        cancel.addEventListener('click', () => cancelSale(s));
+        wrap.append(cancel);
+      }
+      actions.append(wrap);
+
+      tr.append(no, el('td', 'hide-sm', s.customer_name || 'Umum'), el('td', 'hide-md', poDate(s.created_at)),
+        el('td', 'r num', rupiah(s.total)), status, actions);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    tbody.replaceChildren();
+    const tr = el('tr');
+    const td = el('td', 'empty', 'Data penjualan gagal dimuat: ' + error.message);
+    td.colSpan = 6;
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+async function cancelSale(s) {
+  if (!confirm(`Batalkan ${invNo(s.id)}? Stok akan dikembalikan dan kas masuknya dihapus.`)) return;
+  try {
+    await api(`/api/v1/sales/${s.id}/cancel`, { method: 'POST' });
+    toast('Penjualan dibatalkan, stok dikembalikan');
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  }
+  await Promise.all([loadSales(), loadOverview(), load()]);
+}
+
+async function viewSale(id) {
+  try {
+    const { data: s } = await api(`/api/v1/sales/${id}`);
+    $('#poViewTitle').textContent = invNo(s.id);
+    $('#poViewMeta').textContent = `${s.customer_name || 'Umum'} · ${PAY_LABEL[s.payment_method] || s.payment_method} · ${poDate(s.created_at)}` + (s.notes ? ` · ${s.notes}` : '');
+    const tbody = $('#poViewRows');
+    tbody.replaceChildren();
+    for (const it of s.items || []) {
+      const tr = el('tr');
+      tr.append(el('td', '', it.product_name), el('td', 'r num', nf.format(it.quantity)),
+        el('td', 'r num', rupiah(it.unit_price)), el('td', 'r num', rupiah(it.quantity * it.unit_price)));
+      tbody.append(tr);
+    }
+    $('#poViewTotal').textContent = rupiah(s.total);
+    $('#dlgPoView').showModal();
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function addSaleItem() {
+  const row = el('div', 'po-item');
+  const sel = el('select', 'input');
+  sel.name = 'product';
+  for (const p of state.all) {
+    if (p.stock <= 0) continue;
+    const o = el('option', '', `${p.name} (stok ${nf.format(p.stock)})`);
+    o.value = p.id;
+    o.dataset.price = p.price;
+    o.dataset.stock = p.stock;
+    sel.append(o);
+  }
+  const qty = el('input', 'input num');
+  qty.type = 'number'; qty.min = '1'; qty.step = '1'; qty.value = '1'; qty.name = 'qty';
+  qty.setAttribute('aria-label', 'Jumlah');
+  const price = el('div', 'num sale-price');
+  const rm = el('button', 'btn ghost del', '×');
+  rm.type = 'button';
+  rm.setAttribute('aria-label', 'Hapus item');
+
+  const sync = () => {
+    const o = sel.selectedOptions[0];
+    if (!o) return;
+    qty.max = o.dataset.stock;
+    price.textContent = rupiah(Number(o.dataset.price));
+    calcSaleTotal();
+  };
+  rm.addEventListener('click', () => { row.remove(); calcSaleTotal(); });
+  sel.addEventListener('change', sync);
+  qty.addEventListener('input', calcSaleTotal);
+  row.append(sel, qty, price, rm);
+  $('#saleItems').append(row);
+  sync();
+}
+
+function saleRows() {
+  return [...document.querySelectorAll('#saleItems .po-item')].map((r) => {
+    const o = r.querySelector('[name=product]').selectedOptions[0];
+    return {
+      product_id: Number(o ? o.value : 0),
+      quantity: Number(r.querySelector('[name=qty]').value),
+      price: o ? Number(o.dataset.price) : 0,
+    };
+  });
+}
+
+function calcSaleTotal() {
+  $('#saleTotal').textContent = rupiah(saleRows().reduce((a, i) => a + (i.quantity || 0) * i.price, 0));
+}
+
+$('#btnAddSale').addEventListener('click', () => {
+  clearErrors();
+  const f = $('#saleForm');
+  f.reset();
+  $('#saleItems').replaceChildren();
+  if (!state.all.some((p) => p.stock > 0)) { toast('Tidak ada produk dengan stok tersedia.'); return; }
+  addSaleItem();
+  $('#dlgSale').showModal();
+});
+$('#saleAddItem').addEventListener('click', addSaleItem);
+$('#saleCancelForm').addEventListener('click', () => $('#dlgSale').close());
+$('#salePrev').addEventListener('click', () => { if (saleState.page > 1) { saleState.page--; loadSales(); } });
+$('#saleNext').addEventListener('click', () => { if (saleState.page < saleState.totalPages) { saleState.page++; loadSales(); } });
+$('#saleChips').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#saleChips .chip').forEach((c) => c.classList.toggle('on', c === chip));
+  saleState.status = chip.dataset.status;
+  saleState.page = 1;
+  loadSales();
+});
+
+$('#saleForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearErrors();
+  const f = event.currentTarget;
+  const button = $('#saleSave');
+  button.disabled = true;
+  try {
+    await api('/api/v1/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: f.elements.customer_name.value.trim(),
+        payment_method: f.elements.payment_method.value,
+        notes: f.elements.notes.value.trim(),
+        items: saleRows().map(({ product_id, quantity }) => ({ product_id, quantity })),
+      }),
+    });
+    $('#dlgSale').close();
+    toast('Penjualan berhasil dicatat');
+    saleState.page = 1;
+    await Promise.all([loadSales(), loadOverview(), load()]);
+  } catch (error) {
+    if (error.status === 401) { $('#dlgSale').close(); showLogin(); return; }
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = f.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
+    }
+    if (!Object.keys(error.fields || {}).length) $('#saleFormErr').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
 
 /* ---------- pengguna (admin) ---------- */
 

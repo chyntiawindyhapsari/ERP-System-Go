@@ -108,7 +108,7 @@ Contoh response validasi gagal (HTTP 422):
 | `admin`    | Semua | Semua fitur, termasuk kelola pengguna |
 | `gudang`   | Ringkasan, Produk, Persediaan | Kelola produk |
 | `supplier` | Supplier | Kelola data supplier |
-| `kasir`    | Pembelian | Buat, terima, dan batalkan pembelian (hanya bisa *melihat* produk & supplier untuk mengisi form) |
+| `kasir`    | Penjualan, Pembelian | Catat penjualan; buat, terima, dan batalkan pembelian (hanya bisa *melihat* produk & supplier untuk mengisi form) |
 | `keuangan` | Keuangan | Catat transaksi kas, lihat arus kas, laba rugi, dan neraca |
 
 Admin dari `.env` otomatis berole `admin`. Admin bisa membuat pengguna baru (tersimpan di tabel `users`) lewat menu **Pengguna** atau endpoint:
@@ -142,6 +142,17 @@ Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status:
 | POST   | `/api/v1/purchases`              | Buat pembelian                     |
 | POST   | `/api/v1/purchases/{id}/receive` | Terima barang, tambah stok         |
 | POST   | `/api/v1/purchases/{id}/cancel`  | Batalkan                           |
+
+## Modul Penjualan
+
+Kasir mencatat penjualan (banyak produk per transaksi, metode tunai/transfer/QRIS). Dalam satu transaksi database: stok produk berkurang, penjualan tersimpan, dan kas masuk "Penjualan" tercatat otomatis di Keuangan. Harga diambil dari database (bukan dari klien) dan stok yang tidak cukup ditolak. Penjualan bisa **dibatalkan**: stok dikembalikan dan kas masuknya dihapus. Dikelola oleh role `kasir` dan `admin`.
+
+| Method | Path                         | Keterangan                       |
+|--------|------------------------------|----------------------------------|
+| GET    | `/api/v1/sales`              | Daftar (`page`, `limit`, `status`) |
+| GET    | `/api/v1/sales/{id}`         | Detail + item                    |
+| POST   | `/api/v1/sales`              | Catat penjualan, kurangi stok    |
+| POST   | `/api/v1/sales/{id}/cancel`  | Batalkan, kembalikan stok        |
 
 ## Modul Keuangan
 
