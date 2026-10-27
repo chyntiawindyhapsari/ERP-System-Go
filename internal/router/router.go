@@ -45,6 +45,7 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 
 	handler.NewUserHandler(pool).Register(protectedAPI)
 	handler.NewSupplierHandler(pool).Register(protectedAPI)
+	handler.NewPurchaseHandler(pool).Register(protectedAPI)
 
 	// Hak akses per role:
 	//  - produk: semua role boleh lihat; admin & manager boleh tambah/ubah; hanya admin boleh hapus
@@ -58,7 +59,8 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 		case strings.HasPrefix(r.URL.Path, "/api/v1/users"):
 			h = adminOnly(h)
 		case strings.HasPrefix(r.URL.Path, "/api/v1/products"),
-			strings.HasPrefix(r.URL.Path, "/api/v1/suppliers"):
+			strings.HasPrefix(r.URL.Path, "/api/v1/suppliers"),
+			strings.HasPrefix(r.URL.Path, "/api/v1/purchases"):
 			switch r.Method {
 			case http.MethodPost, http.MethodPut, http.MethodPatch:
 				h = canWrite(h)

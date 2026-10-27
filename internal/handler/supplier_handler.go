@@ -237,6 +237,10 @@ func (h *SupplierHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	tag, err := h.pool.Exec(r.Context(), `DELETE FROM suppliers WHERE id = $1`, id)
 	if err != nil {
+		if isForeignKeyViolation(err) {
+			writeError(w, http.StatusConflict, "supplier sudah punya riwayat pembelian; nonaktifkan saja")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "Gagal menghapus supplier")
 		return
 	}

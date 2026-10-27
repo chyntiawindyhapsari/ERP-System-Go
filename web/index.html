@@ -458,6 +458,10 @@
   }
   #toast.show { transform: translateX(-50%) translateY(0); }
 
+  .po-items { display: grid; gap: 8px; margin: 6px 0; }
+  .po-item { display: grid; grid-template-columns: minmax(0, 1fr) 76px 120px auto; gap: 6px; align-items: center; }
+  .po-total { display: flex; justify-content: flex-end; gap: 10px; align-items: baseline; }
+  #dlgPo, #dlgPoView { width: min(640px, calc(100vw - 32px)); }
   .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
   .check input { width: 16px; height: 16px; accent-color: var(--accent); }
   select.input { appearance: auto; }
@@ -507,6 +511,8 @@
   }
 
   @media (max-width: 560px) {
+    .po-item { grid-template-columns: 1fr 1fr auto; }
+    .po-item select { grid-column: 1 / -1; }
     .toolbar .btn, .toolbar .chips { width: 100%; }
     .toolbar .btn { justify-content: center; }
   }
@@ -536,6 +542,7 @@
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2 .7 3.5 2.6 3.5 5.7"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2 11h10.5l2-8H6.5"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></symbol>
     <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></symbol>
   </defs>
 </svg>
@@ -608,6 +615,9 @@
       </button>
       <button type="button" class="nav-item" data-page="suppliers">
         <svg class="i"><use href="#i-truck"/></svg>Supplier
+      </button>
+      <button type="button" class="nav-item" data-page="purchases">
+        <svg class="i"><use href="#i-cart"/></svg>Pembelian
       </button>
       <button type="button" class="nav-item hidden" data-page="users" id="navUsers">
         <svg class="i"><use href="#i-users"/></svg>Pengguna
@@ -777,6 +787,46 @@
       </div>
     </section>
 
+    <!-- PEMBELIAN -->
+
+    <section id="purchasesPage" class="hidden">
+      <div class="card">
+        <div class="toolbar">
+          <div class="chips" id="poChips">
+            <button type="button" class="chip on" data-status="">Semua</button>
+            <button type="button" class="chip" data-status="pending">Menunggu</button>
+            <button type="button" class="chip" data-status="received">Diterima</button>
+            <button type="button" class="chip" data-status="cancelled">Dibatalkan</button>
+          </div>
+          <button type="button" id="btnAddPo" class="btn" style="margin-left:auto">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Buat pembelian
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Supplier</th>
+                <th class="hide-md">Tanggal</th>
+                <th class="r">Total</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="poRows"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="poInfo">Halaman 1</span>
+          <div>
+            <button type="button" class="btn ghost sm" id="poPrev">Sebelumnya</button>
+            <button type="button" class="btn ghost sm" id="poNext">Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- PENGGUNA (admin) -->
 
     <section id="usersPage" class="hidden">
@@ -845,6 +895,61 @@
       <button type="submit" class="btn" id="btnSave">Simpan</button>
     </div>
   </form>
+</dialog>
+
+<!-- FORM PEMBELIAN -->
+
+<dialog id="dlgPo">
+  <form id="poForm" class="dlg-form" novalidate>
+    <h2>Buat pembelian</h2>
+
+    <label class="field">
+      Supplier
+      <select class="input" name="supplier_id"></select>
+      <span class="err" data-for="supplier_id"></span>
+    </label>
+
+    <div class="field">
+      Item
+      <div id="poItems" class="po-items"></div>
+      <button type="button" class="btn ghost sm" id="poAddItem" style="justify-self:start">+ Tambah item</button>
+      <span class="err" data-for="items"></span>
+    </div>
+
+    <label class="field">
+      Catatan
+      <textarea class="input" name="notes" rows="2" maxlength="500"></textarea>
+      <span class="err" data-for="notes"></span>
+    </label>
+
+    <div class="po-total">Total <b class="num" id="poTotal">Rp0</b></div>
+
+    <div class="err" id="poFormErr" role="alert"></div>
+
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="poCancelForm">Batal</button>
+      <button type="submit" class="btn" id="poSave">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- DETAIL PEMBELIAN -->
+
+<dialog id="dlgPoView">
+  <div class="dlg-form">
+    <h2 id="poViewTitle">Pembelian</h2>
+    <div class="hint" id="poViewMeta"></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Produk</th><th class="r">Jml</th><th class="r">Harga</th><th class="r">Subtotal</th></tr></thead>
+        <tbody id="poViewRows"></tbody>
+      </table>
+    </div>
+    <div class="po-total">Total <b class="num" id="poViewTotal"></b></div>
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="poViewClose">Tutup</button>
+    </div>
+  </div>
 </dialog>
 
 <!-- FORM SUPPLIER -->
@@ -1007,6 +1112,7 @@ let deletingSupplier = null;
 let editingSup = null;
 const supState = { page: 1, limit: 8, search: '', status: '', totalPages: 1, total: 0, active: 0 };
 let supTimer;
+const poState = { page: 1, limit: 8, status: '', totalPages: 1, total: 0, pending: 0 };
 let toastTimer;
 let searchTimer;
 
@@ -1097,7 +1203,9 @@ async function showApp(user) {
   $('#btnAddSup').classList.toggle('hidden', !can.write());
   setPage(state.current);
   await refreshAll();
+  $('#btnAddPo').classList.toggle('hidden', !can.write());
   loadSuppliers();
+  loadPurchases();
   if (can.users()) loadUsers();
 }
 
@@ -1175,6 +1283,7 @@ const PAGES = {
   products: ['productsPage', 'Manajemen Produk'],
   inventory: ['inventoryPage', 'Persediaan Barang'],
   suppliers: ['suppliersPage', 'Manajemen Supplier'],
+  purchases: ['purchasesPage', 'Pembelian Barang'],
   users: ['usersPage', 'Manajemen Pengguna'],
 };
 
@@ -1202,6 +1311,7 @@ function updateSummary() {
     case 'products': s.textContent = `${nf.format(total)} produk tersimpan`; break;
     case 'inventory': s.textContent = 'Pantau ketersediaan barang secara langsung'; break;
     case 'suppliers': s.textContent = `${nf.format(supState.total)} supplier · ${nf.format(supState.active)} aktif`; break;
+    case 'purchases': s.textContent = `${nf.format(poState.total)} pembelian · ${nf.format(poState.pending)} menunggu diterima`; break;
     case 'users': s.textContent = 'Akun dan hak akses'; break;
     default: s.textContent = 'Segera hadir';
   }
@@ -1753,6 +1863,226 @@ $('#supForm').addEventListener('submit', async (event) => {
       if (e) e.textContent = message;
     }
     if (!Object.keys(error.fields || {}).length) $('#supFormErr').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+/* ---------- pembelian ---------- */
+
+const PO_STATUS = {
+  pending: ['Menunggu', 'warn'],
+  received: ['Diterima', 'ok'],
+  cancelled: ['Dibatalkan', 'bad'],
+};
+const poDate = (d) => new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d));
+const poNo = (id) => 'PO-' + String(id).padStart(4, '0');
+
+async function loadPurchases() {
+  const q = new URLSearchParams({ page: poState.page, limit: poState.limit });
+  if (poState.status) q.set('status', poState.status);
+  const tbody = $('#poRows');
+  try {
+    const r = await api(`/api/v1/purchases?${q}`);
+    const m = r.meta || {};
+    poState.total = Number(m.total) || 0;
+    poState.pending = Number(m.pending) || 0;
+    poState.page = Number(m.page) || 1;
+    poState.totalPages = Math.max(Number(m.total_pages) || 1, 1);
+    $('#poInfo').textContent = `Halaman ${poState.page} dari ${poState.totalPages}`;
+    $('#poPrev').disabled = poState.page <= 1;
+    $('#poNext').disabled = poState.page >= poState.totalPages;
+    updateSummary();
+
+    tbody.replaceChildren();
+    const items = r.data || [];
+    if (!items.length) {
+      const tr = el('tr');
+      const td = el('td', 'empty', 'Belum ada pembelian.');
+      td.colSpan = 6;
+      tr.append(td);
+      tbody.append(tr);
+      return;
+    }
+    for (const po of items) {
+      const tr = el('tr');
+      const no = el('td');
+      const num = el('div', 'pname', poNo(po.id));
+      num.style.whiteSpace = 'nowrap';
+      no.append(num);
+      no.append(el('div', 'pdesc', po.item_count + ' item'));
+
+      const st = PO_STATUS[po.status] || [po.status, ''];
+      const status = el('td');
+      status.append(el('span', 'badge ' + st[1], st[0]));
+
+      const actions = el('td');
+      const wrap = el('div', 'row-actions');
+      const view = el('button', 'btn ghost', 'Detail');
+      view.type = 'button';
+      view.addEventListener('click', () => viewPurchase(po.id));
+      wrap.append(view);
+      if (can.write() && po.status === 'pending') {
+        const recv = el('button', 'btn ghost', 'Terima');
+        recv.type = 'button';
+        recv.addEventListener('click', () => poAction(po, 'receive', 'Barang diterima, stok diperbarui'));
+        const cancel = el('button', 'btn ghost del', 'Batal');
+        cancel.type = 'button';
+        cancel.addEventListener('click', () => poAction(po, 'cancel', 'Pembelian dibatalkan'));
+        wrap.append(recv, cancel);
+      }
+      actions.append(wrap);
+
+      tr.append(no, el('td', '', po.supplier_name), el('td', 'hide-md', poDate(po.created_at)),
+        el('td', 'r num', rupiah(po.total)), status, actions);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    tbody.replaceChildren();
+    const tr = el('tr');
+    const td = el('td', 'empty', 'Data pembelian gagal dimuat: ' + error.message);
+    td.colSpan = 6;
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+async function poAction(po, action, okMessage) {
+  const label = action === 'receive' ? 'Terima barang' : 'Batalkan pembelian';
+  if (!confirm(`${label} ${poNo(po.id)}?`)) return;
+  try {
+    await api(`/api/v1/purchases/${po.id}/${action}`, { method: 'POST' });
+    toast(okMessage);
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  }
+  await Promise.all([loadPurchases(), loadOverview(), load()]);
+}
+
+async function viewPurchase(id) {
+  try {
+    const { data: po } = await api(`/api/v1/purchases/${id}`);
+    $('#poViewTitle').textContent = poNo(po.id);
+    $('#poViewMeta').textContent = `${po.supplier_name} · ${poDate(po.created_at)}` + (po.notes ? ` · ${po.notes}` : '');
+    const tbody = $('#poViewRows');
+    tbody.replaceChildren();
+    for (const it of po.items || []) {
+      const tr = el('tr');
+      tr.append(el('td', '', it.product_name), el('td', 'r num', nf.format(it.quantity)),
+        el('td', 'r num', rupiah(it.unit_price)), el('td', 'r num', rupiah(it.quantity * it.unit_price)));
+      tbody.append(tr);
+    }
+    $('#poViewTotal').textContent = rupiah(po.total);
+    $('#dlgPoView').showModal();
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function addPoItem() {
+  const row = el('div', 'po-item');
+  const sel = el('select', 'input');
+  sel.name = 'product';
+  for (const p of state.all) {
+    const o = el('option', '', p.name);
+    o.value = p.id;
+    o.dataset.price = p.price;
+    sel.append(o);
+  }
+  const qty = el('input', 'input num');
+  qty.type = 'number'; qty.min = '1'; qty.step = '1'; qty.value = '1'; qty.name = 'qty';
+  qty.setAttribute('aria-label', 'Jumlah');
+  const price = el('input', 'input num');
+  price.type = 'number'; price.min = '0'; price.step = '1'; price.name = 'price';
+  price.setAttribute('aria-label', 'Harga satuan');
+  price.value = sel.selectedOptions[0] ? sel.selectedOptions[0].dataset.price : 0;
+  const rm = el('button', 'btn ghost del', '×');
+  rm.type = 'button';
+  rm.setAttribute('aria-label', 'Hapus item');
+  rm.addEventListener('click', () => { row.remove(); calcPoTotal(); });
+  sel.addEventListener('change', () => { price.value = sel.selectedOptions[0].dataset.price; calcPoTotal(); });
+  qty.addEventListener('input', calcPoTotal);
+  price.addEventListener('input', calcPoTotal);
+  row.append(sel, qty, price, rm);
+  $('#poItems').append(row);
+  calcPoTotal();
+}
+
+function poRows() {
+  return [...document.querySelectorAll('#poItems .po-item')].map((r) => ({
+    product_id: Number(r.querySelector('[name=product]').value),
+    quantity: Number(r.querySelector('[name=qty]').value),
+    unit_price: Number(r.querySelector('[name=price]').value),
+  }));
+}
+
+function calcPoTotal() {
+  $('#poTotal').textContent = rupiah(poRows().reduce((a, i) => a + (i.quantity || 0) * (i.unit_price || 0), 0));
+}
+
+$('#btnAddPo').addEventListener('click', async () => {
+  clearErrors();
+  const f = $('#poForm');
+  f.reset();
+  $('#poItems').replaceChildren();
+  try {
+    const r = await api('/api/v1/suppliers?status=active&limit=100');
+    const sel = f.elements.supplier_id;
+    sel.replaceChildren();
+    for (const sp of r.data || []) {
+      const o = el('option', '', sp.name);
+      o.value = sp.id;
+      sel.append(o);
+    }
+  } catch (error) { toast(error.message); return; }
+  if (!f.elements.supplier_id.options.length) { toast('Belum ada supplier aktif.'); return; }
+  if (!state.all.length) { toast('Belum ada produk.'); return; }
+  addPoItem();
+  $('#dlgPo').showModal();
+});
+$('#poAddItem').addEventListener('click', addPoItem);
+$('#poCancelForm').addEventListener('click', () => $('#dlgPo').close());
+$('#poViewClose').addEventListener('click', () => $('#dlgPoView').close());
+$('#poPrev').addEventListener('click', () => { if (poState.page > 1) { poState.page--; loadPurchases(); } });
+$('#poNext').addEventListener('click', () => { if (poState.page < poState.totalPages) { poState.page++; loadPurchases(); } });
+$('#poChips').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#poChips .chip').forEach((c) => c.classList.toggle('on', c === chip));
+  poState.status = chip.dataset.status;
+  poState.page = 1;
+  loadPurchases();
+});
+
+$('#poForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearErrors();
+  const f = event.currentTarget;
+  const button = $('#poSave');
+  button.disabled = true;
+  try {
+    await api('/api/v1/purchases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supplier_id: Number(f.elements.supplier_id.value),
+        notes: f.elements.notes.value.trim(),
+        items: poRows(),
+      }),
+    });
+    $('#dlgPo').close();
+    toast('Pembelian berhasil dibuat');
+    poState.page = 1;
+    await loadPurchases();
+  } catch (error) {
+    if (error.status === 401) { $('#dlgPo').close(); showLogin(); return; }
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = f.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
+    }
+    if (!Object.keys(error.fields || {}).length) $('#poFormErr').textContent = error.message;
   } finally {
     button.disabled = false;
   }

@@ -129,6 +129,18 @@ CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif
 | PUT    | `/api/v1/suppliers/{id}`  | Ubah                                         |
 | DELETE | `/api/v1/suppliers/{id}`  | Hapus (admin)                                |
 
+## Modul Pembelian
+
+Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status: **Menunggu** → **Diterima** (stok produk otomatis bertambah dalam satu transaksi database) atau **Dibatalkan**. Semua role boleh lihat; admin/manager boleh membuat, menerima, dan membatalkan. Supplier/produk yang sudah punya riwayat pembelian tidak bisa dihapus (supplier cukup dinonaktifkan).
+
+| Method | Path                             | Keterangan                         |
+|--------|----------------------------------|------------------------------------|
+| GET    | `/api/v1/purchases`              | Daftar (`page`, `limit`, `status`) |
+| GET    | `/api/v1/purchases/{id}`         | Detail + item                      |
+| POST   | `/api/v1/purchases`              | Buat pembelian                     |
+| POST   | `/api/v1/purchases/{id}/receive` | Terima barang, tambah stok         |
+| POST   | `/api/v1/purchases/{id}/cancel`  | Batalkan                           |
+
 ## Menjalankan Test
 
 ```

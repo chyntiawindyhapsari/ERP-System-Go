@@ -88,3 +88,21 @@ Content-Type: application/json
 
 ### Hapus (admin)
 DELETE http://localhost:8080/api/v1/suppliers/1
+
+
+### --- Pembelian (baca: semua role; buat/terima/batal: admin/manager) ---
+
+### Daftar (status=pending|received|cancelled)
+GET http://localhost:8080/api/v1/purchases?status=pending
+
+### Buat pembelian
+POST http://localhost:8080/api/v1/purchases
+Content-Type: application/json
+
+{"supplier_id":1,"notes":"Restock bulanan","items":[{"product_id":1,"quantity":10,"unit_price":450000}]}
+
+### Terima barang (stok produk bertambah)
+POST http://localhost:8080/api/v1/purchases/1/receive
+
+### Batalkan
+POST http://localhost:8080/api/v1/purchases/1/cancel

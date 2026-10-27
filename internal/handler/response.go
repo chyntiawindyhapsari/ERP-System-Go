@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"first-project/internal/models"
 	"first-project/internal/service"
 )
@@ -50,6 +52,8 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		})
 	case errors.Is(err, models.ErrNotFound):
 		writeError(w, http.StatusNotFound, "data tidak ditemukan")
+	case isForeignKeyViolation(err):
+		writeError(w, http.StatusConflict, "data masih dipakai di pembelian, tidak bisa dihapus")
 	default:
 		log.Printf("internal error: %v", err)
 		writeError(w, http.StatusInternalServerError, "terjadi kesalahan pada server")
@@ -65,4 +69,9 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 		return fmt.Errorf("body JSON tidak valid: %w", err)
 	}
 	return nil
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
