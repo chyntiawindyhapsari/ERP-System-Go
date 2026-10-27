@@ -256,7 +256,8 @@
     border-right: 1px solid var(--line);
     padding: 26px 16px;
     display: flex; flex-direction: column;
-    position: sticky; top: 0; height: 100vh;
+    position: sticky; top: 0; height: 100vh; height: 100dvh;
+    overflow-y: auto;
   }
   .sidebar .brand { padding: 0 10px 30px; }
 
@@ -294,7 +295,7 @@
   .who b { display: block; font-weight: 600; font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .who span { font-size: .76rem; color: var(--ink-3); }
 
-  .main { min-width: 0; padding: 36px clamp(20px, 4vw, 56px) 56px; max-width: 1180px; width: 100%; }
+  .main { min-width: 0; padding: 36px clamp(20px, 4vw, 56px) 56px; max-width: 1680px; width: 100%; margin-inline: auto; }
 
   .topbar {
     display: flex; align-items: flex-end; justify-content: space-between;
@@ -433,7 +434,8 @@
   dialog {
     border: 1px solid var(--line); border-radius: 14px;
     background: var(--surface); color: var(--ink);
-    padding: 0; width: min(460px, 92vw);
+    padding: 0; width: min(520px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px); overflow-y: auto;
     box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .35);
   }
   dialog::backdrop { background: rgba(20, 20, 17, .5); backdrop-filter: blur(2px); }
@@ -456,7 +458,25 @@
   }
   #toast.show { transform: translateX(-50%) translateY(0); }
 
+  .check { display: flex; align-items: center; gap: 8px; font-size: .92rem; cursor: pointer; }
+  .check input { width: 16px; height: 16px; accent-color: var(--accent); }
+  select.input { appearance: auto; }
+  .toolbar .search { flex: 1 1 220px; }
+  .toolbar .btn { flex: none; }
+  .topbar h1, .pname { overflow-wrap: anywhere; }
+  .stat .v { overflow-wrap: anywhere; }
+
   /* ---------- Responsive ---------- */
+
+  /* layar sempit / zoom besar (125%-150%): sidebar lebih ramping */
+  @media (max-width: 1100px) {
+    .app-shell { grid-template-columns: 204px minmax(0, 1fr); }
+    .sidebar { padding: 22px 12px; }
+    .main { padding-top: 28px; }
+    th, td { padding: 12px 12px; }
+    .pdesc { max-width: 20ch; }
+    .hide-md { display: none; }
+  }
 
   @media (max-width: 960px) {
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -486,6 +506,11 @@
     .hide-sm { display: none; }
   }
 
+  @media (max-width: 560px) {
+    .toolbar .btn, .toolbar .chips { width: 100%; }
+    .toolbar .btn { justify-content: center; }
+  }
+
   @media (max-width: 460px) {
     .stats { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
@@ -510,6 +535,7 @@
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2 .7 3.5 2.6 3.5 5.7"/></symbol>
     <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></symbol>
   </defs>
 </svg>
@@ -581,7 +607,10 @@
         <svg class="i"><use href="#i-layers"/></svg>Persediaan
       </button>
       <button type="button" class="nav-item" data-page="suppliers">
-        <svg class="i"><use href="#i-truck"/></svg>Supplier<span class="soon">Segera</span>
+        <svg class="i"><use href="#i-truck"/></svg>Supplier
+      </button>
+      <button type="button" class="nav-item hidden" data-page="users" id="navUsers">
+        <svg class="i"><use href="#i-users"/></svg>Pengguna
       </button>
     </nav>
 
@@ -589,7 +618,7 @@
       <div class="avatar" id="avatar">A</div>
       <div class="who">
         <b id="whoName">Admin</b>
-        <span>Administrator</span>
+        <span id="whoRole">Administrator</span>
       </div>
     </div>
   </aside>
@@ -709,10 +738,68 @@
     <!-- SUPPLIER -->
 
     <section id="suppliersPage" class="hidden">
-      <div class="card soon-card">
-        <div class="ring"><svg class="i"><use href="#i-truck"/></svg></div>
-        <h3>Modul supplier sedang disiapkan</h3>
-        <p>Data pemasok, kontak, dan riwayat pembelian akan tersedia di sini setelah terhubung ke database.</p>
+      <div class="card">
+        <div class="toolbar">
+          <div class="search">
+            <svg class="i"><use href="#i-search"/></svg>
+            <input id="supSearch" class="input" type="search" placeholder="Cari nama, kontak, atau kota" aria-label="Cari supplier">
+          </div>
+          <div class="chips" id="supChips">
+            <button type="button" class="chip on" data-status="">Semua</button>
+            <button type="button" class="chip" data-status="active">Aktif</button>
+            <button type="button" class="chip" data-status="inactive">Nonaktif</button>
+          </div>
+          <button type="button" id="btnAddSup" class="btn">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Tambah supplier
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th>Kontak</th>
+                <th class="hide-md">Kota</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="supRows"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="supInfo">Halaman 1</span>
+          <div>
+            <button type="button" class="btn ghost sm" id="supPrev">Sebelumnya</button>
+            <button type="button" class="btn ghost sm" id="supNext">Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PENGGUNA (admin) -->
+
+    <section id="usersPage" class="hidden">
+      <div class="card">
+        <div class="toolbar">
+          <div class="hint">Kelola akun dan role. Admin: akses penuh · Manager: tambah/ubah produk · Staff: hanya lihat.</div>
+          <button type="button" id="btnAddUser" class="btn">
+            <svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Tambah pengguna
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -760,11 +847,117 @@
   </form>
 </dialog>
 
+<!-- FORM SUPPLIER -->
+
+<dialog id="dlgSup">
+  <form id="supForm" class="dlg-form" novalidate>
+    <h2 id="supTitle">Tambah supplier</h2>
+
+    <label class="field">
+      Nama supplier
+      <input class="input" name="name" maxlength="100" autocomplete="off" required>
+      <span class="err" data-for="name"></span>
+    </label>
+
+    <div class="form-row">
+      <label class="field">
+        Kontak person
+        <input class="input" name="contact_person" maxlength="100" autocomplete="off">
+        <span class="err" data-for="contact_person"></span>
+      </label>
+      <label class="field">
+        Telepon
+        <input class="input" name="phone" maxlength="30" inputmode="tel" autocomplete="off">
+        <span class="err" data-for="phone"></span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label class="field">
+        Email
+        <input class="input" name="email" type="email" maxlength="120" autocomplete="off">
+        <span class="err" data-for="email"></span>
+      </label>
+      <label class="field">
+        Kota
+        <input class="input" name="city" maxlength="80" autocomplete="off">
+        <span class="err" data-for="city"></span>
+      </label>
+    </div>
+
+    <label class="field">
+      Alamat
+      <textarea class="input" name="address" rows="2" maxlength="300"></textarea>
+      <span class="err" data-for="address"></span>
+    </label>
+
+    <label class="field">
+      Catatan
+      <textarea class="input" name="notes" rows="2" maxlength="500"></textarea>
+      <span class="err" data-for="notes"></span>
+    </label>
+
+    <label class="check"><input type="checkbox" name="is_active" checked> Supplier aktif</label>
+
+    <div class="err" id="supFormErr" role="alert"></div>
+
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="supCancel">Batal</button>
+      <button type="submit" class="btn" id="supSave">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- FORM PENGGUNA -->
+
+<dialog id="dlgUser">
+  <form id="userForm" class="dlg-form" novalidate>
+    <h2>Tambah pengguna</h2>
+
+    <label class="field">
+      Username
+      <input class="input" name="username" maxlength="50" autocomplete="off" required>
+      <span class="err" data-for="username"></span>
+    </label>
+
+    <label class="field">
+      Nama lengkap
+      <input class="input" name="full_name" maxlength="100" autocomplete="off">
+      <span class="err" data-for="full_name"></span>
+    </label>
+
+    <div class="form-row">
+      <label class="field">
+        Password
+        <input class="input" name="password" type="password" autocomplete="new-password" required>
+        <span class="err" data-for="password"></span>
+      </label>
+
+      <label class="field">
+        Role
+        <select class="input" name="role">
+          <option value="staff">Staff</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+        <span class="err" data-for="role"></span>
+      </label>
+    </div>
+
+    <div class="err" id="userFormErr" role="alert"></div>
+
+    <div class="form-actions">
+      <button type="button" class="btn ghost" id="userCancel">Batal</button>
+      <button type="submit" class="btn" id="userSave">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- KONFIRMASI HAPUS -->
 
 <dialog id="dlgDel">
   <div class="dlg-form">
-    <h2>Hapus produk?</h2>
+    <h2 id="delTitle">Hapus produk?</h2>
     <p class="hint" id="delText"></p>
     <div class="form-actions">
       <button type="button" class="btn ghost" id="delCancel">Batal</button>
@@ -779,6 +972,12 @@
 const API = '/api/v1/products';
 const AUTH_API = '/api/v1/auth';
 const LOW_STOCK = 10;
+const ROLE_LABEL = { admin: 'Administrator', manager: 'Manager', staff: 'Staff' };
+const can = {
+  write: () => state.user && ['admin', 'manager'].includes(state.user.role),
+  remove: () => state.user && state.user.role === 'admin',
+  users: () => state.user && state.user.role === 'admin',
+};
 
 const state = {
   page: 1,
@@ -803,6 +1002,11 @@ const nf = new Intl.NumberFormat('id-ID');
 
 let editingId = null;
 let deletingProduct = null;
+let deletingKind = 'product';
+let deletingSupplier = null;
+let editingSup = null;
+const supState = { page: 1, limit: 8, search: '', status: '', totalPages: 1, total: 0, active: 0 };
+let supTimer;
 let toastTimer;
 let searchTimer;
 
@@ -883,12 +1087,18 @@ async function showApp(user) {
   const name = user.full_name || user.username || 'Admin';
   $('#whoName').textContent = name;
   $('#avatar').textContent = name.trim().charAt(0).toUpperCase();
+  $('#whoRole').textContent = ROLE_LABEL[user.role] || user.role;
+  $('#navUsers').classList.toggle('hidden', !can.users());
+  $('#btnAdd').classList.toggle('hidden', !can.write());
 
   $('#loginScreen').classList.add('hidden');
   $('#appScreen').classList.remove('hidden');
 
+  $('#btnAddSup').classList.toggle('hidden', !can.write());
   setPage(state.current);
   await refreshAll();
+  loadSuppliers();
+  if (can.users()) loadUsers();
 }
 
 async function initializeApp() {
@@ -964,7 +1174,8 @@ const PAGES = {
   dashboard: ['dashboardPage', 'Ringkasan'],
   products: ['productsPage', 'Manajemen Produk'],
   inventory: ['inventoryPage', 'Persediaan Barang'],
-  suppliers: ['suppliersPage', 'Data Supplier'],
+  suppliers: ['suppliersPage', 'Manajemen Supplier'],
+  users: ['usersPage', 'Manajemen Pengguna'],
 };
 
 function greeting() {
@@ -990,11 +1201,14 @@ function updateSummary() {
     }
     case 'products': s.textContent = `${nf.format(total)} produk tersimpan`; break;
     case 'inventory': s.textContent = 'Pantau ketersediaan barang secara langsung'; break;
+    case 'suppliers': s.textContent = `${nf.format(supState.total)} supplier · ${nf.format(supState.active)} aktif`; break;
+    case 'users': s.textContent = 'Akun dan hak akses'; break;
     default: s.textContent = 'Segera hadir';
   }
 }
 
 function setPage(page) {
+  if (page === 'users' && !can.users()) page = 'dashboard';
   const selected = PAGES[page];
   if (!selected) return;
 
@@ -1212,7 +1426,8 @@ function render(items, meta) {
     del.type = 'button';
     del.addEventListener('click', () => askDelete(p));
 
-    wrap.append(edit, del);
+    if (can.write()) wrap.append(edit);
+    if (can.remove()) wrap.append(del);
     actions.append(wrap);
 
     tr.append(
@@ -1250,6 +1465,8 @@ function openForm(product) {
 
 function askDelete(product) {
   deletingProduct = product;
+  deletingKind = 'product';
+  $('#delTitle').textContent = 'Hapus produk?';
   $('#delText').textContent = `“${product.name}” akan dihapus permanen dan tidak dapat dikembalikan.`;
   $('#dlgDel').showModal();
 }
@@ -1257,6 +1474,7 @@ function askDelete(product) {
 $('#delCancel').addEventListener('click', () => $('#dlgDel').close());
 
 $('#delOk').addEventListener('click', async () => {
+  if (deletingKind === 'supplier') return deleteSupplier();
   const product = deletingProduct;
   if (!product) return;
 
@@ -1368,6 +1586,272 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
   setPage('products');
   $('#search').focus();
+});
+
+/* ---------- supplier ---------- */
+
+async function loadSuppliers() {
+  const q = new URLSearchParams({ page: supState.page, limit: supState.limit });
+  if (supState.search) q.set('search', supState.search);
+  if (supState.status) q.set('status', supState.status);
+
+  const tbody = $('#supRows');
+  try {
+    const r = await api(`/api/v1/suppliers?${q}`);
+    const m = r.meta || {};
+    supState.total = Number(m.total) || 0;
+    supState.active = Number(m.active) || 0;
+    supState.page = Number(m.page) || 1;
+    supState.totalPages = Math.max(Number(m.total_pages) || 1, 1);
+
+    $('#supInfo').textContent = `Halaman ${supState.page} dari ${supState.totalPages}`;
+    $('#supPrev').disabled = supState.page <= 1;
+    $('#supNext').disabled = supState.page >= supState.totalPages;
+    updateSummary();
+
+    tbody.replaceChildren();
+    const items = r.data || [];
+    if (!items.length) {
+      const tr = el('tr');
+      const td = el('td', 'empty', supState.search || supState.status ? 'Supplier tidak ditemukan.' : 'Belum ada supplier.');
+      td.colSpan = 5;
+      tr.append(td);
+      tbody.append(tr);
+      return;
+    }
+
+    for (const sp of items) {
+      const tr = el('tr');
+
+      const nameCell = el('td');
+      nameCell.append(el('div', 'pname', sp.name));
+      if (sp.address) nameCell.append(el('div', 'pdesc', sp.address));
+
+      const contact = el('td');
+      contact.append(el('div', 'pname', sp.contact_person || '–'));
+      const line = [sp.phone, sp.email].filter(Boolean).join(' · ');
+      if (line) contact.append(el('div', 'pdesc', line));
+
+      const status = el('td');
+      status.append(el('span', 'badge ' + (sp.is_active ? 'ok' : 'bad'), sp.is_active ? 'Aktif' : 'Nonaktif'));
+
+      const actions = el('td');
+      const wrap = el('div', 'row-actions');
+      if (can.write()) {
+        const edit = el('button', 'btn ghost', 'Edit');
+        edit.type = 'button';
+        edit.addEventListener('click', () => openSupForm(sp));
+        wrap.append(edit);
+      }
+      if (can.remove()) {
+        const del = el('button', 'btn ghost del', 'Hapus');
+        del.type = 'button';
+        del.addEventListener('click', () => {
+          deletingKind = 'supplier';
+          deletingSupplier = sp;
+          $('#delTitle').textContent = 'Hapus supplier?';
+          $('#delText').textContent = `“${sp.name}” akan dihapus permanen dan tidak dapat dikembalikan.`;
+          $('#dlgDel').showModal();
+        });
+        wrap.append(del);
+      }
+      actions.append(wrap);
+
+      tr.append(nameCell, contact, el('td', 'hide-md', sp.city || '–'), status, actions);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    tbody.replaceChildren();
+    const tr = el('tr');
+    const td = el('td', 'empty', 'Data supplier gagal dimuat: ' + error.message);
+    td.colSpan = 5;
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+function openSupForm(sp) {
+  editingSup = sp ? sp.id : null;
+  clearErrors();
+  const f = $('#supForm');
+  f.reset();
+  $('#supTitle').textContent = sp ? 'Edit supplier' : 'Tambah supplier';
+  for (const k of ['name', 'contact_person', 'phone', 'email', 'city', 'address', 'notes']) {
+    f.elements[k].value = sp ? (sp[k] || '') : '';
+  }
+  f.elements.is_active.checked = sp ? sp.is_active : true;
+  $('#dlgSup').showModal();
+  f.elements.name.focus();
+}
+
+async function deleteSupplier() {
+  const sp = deletingSupplier;
+  if (!sp) return;
+  const button = $('#delOk');
+  button.disabled = true;
+  try {
+    await api(`/api/v1/suppliers/${sp.id}`, { method: 'DELETE' });
+    $('#dlgDel').close();
+    toast('Supplier berhasil dihapus');
+    if ($('#supRows').children.length === 1 && supState.page > 1) supState.page--;
+    await loadSuppliers();
+  } catch (error) {
+    $('#dlgDel').close();
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+$('#btnAddSup').addEventListener('click', () => openSupForm(null));
+$('#supCancel').addEventListener('click', () => $('#dlgSup').close());
+$('#supPrev').addEventListener('click', () => { if (supState.page > 1) { supState.page--; loadSuppliers(); } });
+$('#supNext').addEventListener('click', () => { if (supState.page < supState.totalPages) { supState.page++; loadSuppliers(); } });
+
+$('#supSearch').addEventListener('input', (e) => {
+  clearTimeout(supTimer);
+  supTimer = setTimeout(() => { supState.search = e.target.value.trim(); supState.page = 1; loadSuppliers(); }, 300);
+});
+
+$('#supChips').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#supChips .chip').forEach((c) => c.classList.toggle('on', c === chip));
+  supState.status = chip.dataset.status;
+  supState.page = 1;
+  loadSuppliers();
+});
+
+$('#supForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearErrors();
+  const f = event.currentTarget;
+  const button = $('#supSave');
+  const payload = { is_active: f.elements.is_active.checked };
+  for (const k of ['name', 'contact_person', 'phone', 'email', 'city', 'address', 'notes']) {
+    payload[k] = f.elements[k].value.trim();
+  }
+  const isEditing = editingSup !== null;
+
+  button.disabled = true;
+  try {
+    await api(isEditing ? `/api/v1/suppliers/${editingSup}` : '/api/v1/suppliers', {
+      method: isEditing ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    $('#dlgSup').close();
+    toast(isEditing ? 'Supplier berhasil diperbarui' : 'Supplier berhasil ditambahkan');
+    if (!isEditing) supState.page = 1;
+    await loadSuppliers();
+  } catch (error) {
+    if (error.status === 401) { $('#dlgSup').close(); showLogin(); return; }
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = f.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
+    }
+    if (!Object.keys(error.fields || {}).length) $('#supFormErr').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+/* ---------- pengguna (admin) ---------- */
+
+async function loadUsers() {
+  const tbody = $('#userRows');
+  try {
+    const result = await api('/api/v1/users');
+    tbody.replaceChildren();
+    for (const u of result.data || []) {
+      const tr = el('tr');
+
+      const nameCell = el('td');
+      nameCell.append(el('div', 'pname', u.full_name || u.username));
+      nameCell.append(el('div', 'pdesc', '@' + u.username));
+
+      const roleCell = el('td');
+      const sel = el('select', 'input');
+      for (const r of Object.keys(ROLE_LABEL)) {
+        const o = el('option', '', ROLE_LABEL[r]);
+        o.value = r;
+        sel.append(o);
+      }
+      sel.value = u.role;
+      sel.addEventListener('change', () => saveUser(u, sel.value, u.is_active));
+      roleCell.append(sel);
+
+      const statusCell = el('td');
+      statusCell.append(el('span', 'badge ' + (u.is_active ? 'ok' : 'bad'), u.is_active ? 'Aktif' : 'Nonaktif'));
+
+      const actions = el('td');
+      const toggle = el('button', 'btn ghost', u.is_active ? 'Nonaktifkan' : 'Aktifkan');
+      toggle.type = 'button';
+      toggle.addEventListener('click', () => saveUser(u, u.role, !u.is_active));
+      actions.append(toggle);
+
+      tr.append(nameCell, roleCell, statusCell, actions);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    if (error.status === 401) { showLogin(); return; }
+    toast(error.message);
+  }
+}
+
+async function saveUser(u, role, isActive) {
+  try {
+    await api(`/api/v1/users/${u.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, is_active: isActive }),
+    });
+    toast('Pengguna diperbarui');
+  } catch (error) {
+    toast(error.message);
+  }
+  await loadUsers();
+}
+
+$('#btnAddUser').addEventListener('click', () => {
+  clearErrors();
+  $('#userForm').reset();
+  $('#dlgUser').showModal();
+  $('#userForm').elements.username.focus();
+});
+$('#userCancel').addEventListener('click', () => $('#dlgUser').close());
+
+$('#userForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearErrors();
+  const f = event.currentTarget;
+  const button = $('#userSave');
+  button.disabled = true;
+  try {
+    await api('/api/v1/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: f.elements.username.value.trim(),
+        full_name: f.elements.full_name.value.trim(),
+        password: f.elements.password.value,
+        role: f.elements.role.value,
+      }),
+    });
+    $('#dlgUser').close();
+    toast('Pengguna berhasil dibuat');
+    await loadUsers();
+  } catch (error) {
+    for (const [field, message] of Object.entries(error.fields || {})) {
+      const e = f.querySelector(`.err[data-for="${field}"]`);
+      if (e) e.textContent = message;
+    }
+    if (!Object.keys(error.fields || {}).length) $('#userFormErr').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 
 initializeApp();

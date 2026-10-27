@@ -101,6 +101,34 @@ Contoh response validasi gagal (HTTP 422):
 }
 ```
 
+## Role & Pengguna
+
+| Role      | Akses |
+|-----------|-------|
+| `admin`   | Semua, termasuk kelola pengguna & hapus produk |
+| `manager` | Lihat, tambah, dan ubah produk |
+| `staff`   | Hanya lihat |
+
+Admin dari `.env` otomatis berole `admin`. Admin bisa membuat pengguna baru (tersimpan di tabel `users`) lewat menu **Pengguna** atau endpoint:
+
+| Method | Path                 | Keterangan                      |
+|--------|----------------------|---------------------------------|
+| GET    | `/api/v1/users`      | Daftar pengguna (admin)         |
+| POST   | `/api/v1/users`      | Buat pengguna (admin)           |
+| PUT    | `/api/v1/users/{id}` | Ubah role / aktif-nonaktif      |
+
+## Modul Supplier
+
+CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif) dengan pencarian, filter status, dan pagination. Akses sama seperti produk: semua role boleh lihat, admin/manager boleh tambah & ubah, hanya admin boleh hapus.
+
+| Method | Path                      | Keterangan                                   |
+|--------|---------------------------|----------------------------------------------|
+| GET    | `/api/v1/suppliers`       | Daftar (`page`, `limit`, `search`, `status`) |
+| GET    | `/api/v1/suppliers/{id}`  | Detail                                       |
+| POST   | `/api/v1/suppliers`       | Tambah                                       |
+| PUT    | `/api/v1/suppliers/{id}`  | Ubah                                         |
+| DELETE | `/api/v1/suppliers/{id}`  | Hapus (admin)                                |
+
 ## Menjalankan Test
 
 ```

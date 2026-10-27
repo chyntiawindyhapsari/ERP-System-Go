@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -13,6 +14,44 @@ import (
 )
 
 const SessionCookieName = "erp_session"
+
+type ctxKey struct{}
+
+// CurrentUser adalah user yang sedang login (diisi oleh RequireSession).
+type CurrentUser struct {
+	ID   int64
+	Role string
+}
+
+func UserFrom(ctx context.Context) (CurrentUser, bool) {
+	u, ok := ctx.Value(ctxKey{}).(CurrentUser)
+	return u, ok
+}
+
+// RequireRole menolak (403) request dari user yang rolenya tidak diizinkan.
+func RequireRole(roles ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			u, ok := UserFrom(r.Context())
+			if !ok {
+				unauthorized(w)
+				return
+			}
+			for _, role := range roles {
+				if u.Role == role {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"success": false,
+				"message": "Anda tidak punya akses untuk aksi ini.",
+			})
+		})
+	}
+}
 
 type statusRecorder struct {
 	http.ResponseWriter
@@ -73,23 +112,22 @@ func RequireSession(pool *pgxpool.Pool, next http.Handler) http.Handler {
 		sum := sha256.Sum256([]byte(cookie.Value))
 		tokenHash := hex.EncodeToString(sum[:])
 
-		var valid bool
+		var cu CurrentUser
 		err = pool.QueryRow(r.Context(), `
-			SELECT EXISTS (
-				SELECT 1
-				FROM user_sessions s
-				JOIN users u ON u.id = s.user_id
-				WHERE s.token_hash = $1
-				  AND s.expires_at > NOW()
-				  AND u.is_active = TRUE
-			)
-		`, tokenHash).Scan(&valid)
+			SELECT u.id, u.role
+			FROM user_sessions s
+			JOIN users u ON u.id = s.user_id
+			WHERE s.token_hash = $1
+			  AND s.expires_at > NOW()
+			  AND u.is_active = TRUE
+		`, tokenHash).Scan(&cu.ID, &cu.Role)
 
-		if err != nil || !valid {
+		if err != nil {
 			unauthorized(w)
 			return
 		}
 
+		r = r.WithContext(context.WithValue(r.Context(), ctxKey{}, cu))
 		next.ServeHTTP(w, r)
 	})
 }

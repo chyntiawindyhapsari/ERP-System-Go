@@ -4,6 +4,7 @@ package router
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"first-project/internal/handler"
@@ -42,7 +43,33 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 	protectedAPI := http.NewServeMux()
 	handler.NewProductHandler(productSvc).Register(protectedAPI)
 
-	mux.Handle("/api/v1/", middleware.RequireSession(pool, protectedAPI))
+	handler.NewUserHandler(pool).Register(protectedAPI)
+	handler.NewSupplierHandler(pool).Register(protectedAPI)
+
+	// Hak akses per role:
+	//  - produk: semua role boleh lihat; admin & manager boleh tambah/ubah; hanya admin boleh hapus
+	//  - supplier: aturan sama dengan produk
+	//  - pengguna: hanya admin
+	adminOnly := middleware.RequireRole("admin")
+	canWrite := middleware.RequireRole("admin", "manager")
+	authorized := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var h http.Handler = protectedAPI
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/api/v1/users"):
+			h = adminOnly(h)
+		case strings.HasPrefix(r.URL.Path, "/api/v1/products"),
+			strings.HasPrefix(r.URL.Path, "/api/v1/suppliers"):
+			switch r.Method {
+			case http.MethodPost, http.MethodPut, http.MethodPatch:
+				h = canWrite(h)
+			case http.MethodDelete:
+				h = adminOnly(h)
+			}
+		}
+		h.ServeHTTP(w, r)
+	})
+
+	mux.Handle("/api/v1/", middleware.RequireSession(pool, authorized))
 
 	return middleware.Recover(
 		middleware.Logger(
