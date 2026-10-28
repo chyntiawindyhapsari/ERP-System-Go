@@ -1,196 +1,135 @@
-# First Project – REST API Golang + PostgreSQL
+# ERP Mini — Go + PostgreSQL
 
-REST API manajemen produk dengan operasi CRUD lengkap, dibuat sebagai project portofolio Golang.
+Sistem ERP sederhana untuk usaha kecil: produk & persediaan, supplier, pembelian, penjualan, dan laporan keuangan, dengan hak akses berbasis peran. Backend ditulis dengan Go (hanya `net/http` standard library) dan PostgreSQL, frontend berupa single-page app yang di-embed ke dalam binary.
 
 ## Fitur
 
-- CRUD produk (Create, Read, Update, Delete)
-- Pagination & pencarian (`?page=1&limit=10&search=mouse`)
-- Arsitektur berlapis: **handler → service → repository → database**
-- Validasi input + response error yang konsisten
-- Migrasi database otomatis saat aplikasi dijalankan (embed SQL)
-- Middleware: logger, panic recovery, CORS
-- Health check (`/health`) yang juga mengecek koneksi database
-- Graceful shutdown
-- Unit test untuk service (tanpa perlu database)
-- Hanya 2 dependency: `pgx` (driver PostgreSQL) dan `godotenv`
-
-## Integrasi n8n & WhatsApp (baru)
-
-- Notifikasi WA tiap penjualan baru, laporan harian jam 20:00, peringatan stok menipis
-- Bot WA (Fonnte): kirim `stok mouse` → dibalas sisa stok
-- Endpoint read-only `/api/integration/*` (API key) + webhook `sale.created`
-- Workflow n8n siap import di folder `n8n/`
-
-Panduan lengkap step by step: [PANDUAN-n8n-WA.md](PANDUAN-n8n-WA.md)
+- **Produk & persediaan** — CRUD, pencarian, pagination
+- **Supplier** — CRUD, filter status, pencarian
+- **Pembelian** — banyak item per transaksi; saat diterima, stok bertambah dan kas keluar tercatat otomatis
+- **Penjualan** — tunai / transfer / QRIS; stok berkurang dan kas masuk tercatat otomatis dalam satu transaksi database; dapat dibatalkan
+- **Keuangan** — arus kas, laba rugi, dan neraca dengan filter tanggal
+- **Autentikasi & RBAC** — sesi berbasis cookie, password di-hash dengan bcrypt, lima role
+- **Integrasi n8n & WhatsApp** — notifikasi penjualan, laporan harian, dan peringatan stok menipis
+- Migrasi database otomatis saat aplikasi dijalankan, graceful shutdown, health check, middleware logger/recover/CORS
 
 ## Tech Stack
 
-Go 1.22+ · `net/http` (standard library) · PostgreSQL 16 · pgx v5 · Docker
+Go 1.26 · `net/http` · PostgreSQL 16 · pgx v5 · bcrypt · n8n (opsional) · Docker (opsional)
 
-## Struktur Folder
+## Arsitektur
+
+Berlapis: **handler → service → repository → database**. Modul yang lebih baru (supplier, pembelian, penjualan, keuangan) memakai handler dengan query langsung dan transaksi database.
 
 ```
-first-project/
-├── main.go                       # entry point, merakit semua layer
-├── go.mod
-├── docker-compose.yml            # PostgreSQL via Docker
-├── .env.example                  # contoh konfigurasi
-├── api.http                      # kumpulan request untuk tes API
+.
+├── main.go                    # entry point
+├── web/                       # frontend (embed ke binary)
+├── n8n/                       # workflow n8n siap import
+├── docker-compose.yml         # PostgreSQL (+ n8n, profil "automation")
+├── api.http                   # kumpulan request uji
 └── internal/
-    ├── config/config.go          # baca konfigurasi dari .env
-    ├── database/
-    │   ├── postgres.go           # koneksi pool + migrasi
-    │   └── migrations/           # file SQL (001_..., 002_...)
-    ├── models/product.go         # struct data
-    ├── repository/               # query SQL (akses database)
-    ├── service/                  # business logic + validasi (+ test)
-    ├── handler/                  # HTTP handler & format response
-    ├── middleware/               # logger, recover, CORS
-    └── router/router.go          # daftar route
+    ├── config/                # konfigurasi dari environment
+    ├── database/              # koneksi pool + migrasi SQL
+    ├── handler/               # HTTP handler tiap modul
+    ├── middleware/            # sesi, role, logger, recover, CORS
+    ├── models/ repository/ service/
+    ├── notify/                # pengirim webhook keluar
+    └── router/                # routing & aturan akses
 ```
 
-## Cara Menjalankan
+## Menjalankan
 
-1. Jalankan PostgreSQL: `docker compose up -d`
-2. Salin konfigurasi: `copy .env.example .env` (PowerShell: `Copy-Item .env.example .env`)
-3. Unduh dependency: `go mod tidy`
-4. Jalankan: `go run .`
-5. Buka http://localhost:8080/health
+Prasyarat: Go 1.26+ dan PostgreSQL 16 (atau Docker).
 
-Tanpa Docker: install PostgreSQL, buat database `first_project`, lalu sesuaikan `.env`.
-
-## Endpoint
-
-| Method | Path                    | Keterangan                  |
-|--------|-------------------------|-----------------------------|
-| GET    | `/health`               | Cek server & database       |
-| POST   | `/api/v1/products`      | Tambah produk               |
-| GET    | `/api/v1/products`      | Daftar produk (pagination)  |
-| GET    | `/api/v1/products/{id}` | Detail produk               |
-| PUT    | `/api/v1/products/{id}` | Ubah produk                 |
-| DELETE | `/api/v1/products/{id}` | Hapus produk                |
-
-## Contoh Request (PowerShell)
-
-```powershell
-# Tambah produk
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/products `
-  -ContentType "application/json" `
-  -Body '{"name":"Headset Gaming","description":"Headset 7.1","price":350000,"stock":15}'
-
-# Daftar produk
-Invoke-RestMethod http://localhost:8080/api/v1/products?page=1`&limit=5
-
-# Detail, update, hapus
-Invoke-RestMethod http://localhost:8080/api/v1/products/1
-Invoke-RestMethod -Method Put -Uri http://localhost:8080/api/v1/products/1 `
-  -ContentType "application/json" `
-  -Body '{"name":"Keyboard RGB","description":"","price":550000,"stock":20}'
-Invoke-RestMethod -Method Delete -Uri http://localhost:8080/api/v1/products/1
+```bash
+docker compose up -d          # PostgreSQL (lewati jika sudah punya PostgreSQL sendiri)
+cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
+go mod tidy
+go run .
 ```
 
-Contoh response sukses:
+Aplikasi berjalan di `http://localhost:8080`. Cek kesehatan: `GET /health`. Akun admin dibuat otomatis dari `ADMIN_USERNAME` / `ADMIN_PASSWORD` pada `.env`.
 
-```json
-{
-  "success": true,
-  "message": "produk berhasil dibuat",
-  "data": { "id": 4, "name": "Headset Gaming", "price": 350000, "stock": 15 }
-}
-```
+Menjalankan test: `go test ./...`
 
-Contoh response validasi gagal (HTTP 422):
+## Konfigurasi
 
-```json
-{
-  "success": false,
-  "message": "validasi gagal",
-  "errors": { "name": "nama minimal 3 karakter", "price": "harga harus lebih dari 0" }
-}
-```
+| Variabel | Keterangan |
+|---|---|
+| `APP_PORT` | Port aplikasi (default `8080`) |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE` | Koneksi PostgreSQL |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_FULL_NAME` | Admin awal |
+| `INTEGRATION_API_KEY` | Kunci akses endpoint integrasi (opsional) |
+| `SALE_WEBHOOK_URL`, `SALE_WEBHOOK_SECRET` | Tujuan webhook event penjualan (opsional) |
 
-## Role & Pengguna
+> `.env` berisi kredensial dan tidak boleh di-commit.
 
-| Role       | Menu yang tampil | Hak akses |
-|------------|------------------|-----------|
-| `admin`    | Semua | Semua fitur, termasuk kelola pengguna |
-| `gudang`   | Ringkasan, Produk, Persediaan | Kelola produk |
-| `supplier` | Supplier | Kelola data supplier |
-| `kasir`    | Penjualan, Pembelian | Catat penjualan; buat, terima, dan batalkan pembelian (hanya bisa *melihat* produk & supplier untuk mengisi form) |
-| `keuangan` | Keuangan | Catat transaksi kas, lihat arus kas, laba rugi, dan neraca |
+## Peran & Hak Akses
 
-Admin dari `.env` otomatis berole `admin`. Admin bisa membuat pengguna baru (tersimpan di tabel `users`) lewat menu **Pengguna** atau endpoint:
+| Role | Akses |
+|---|---|
+| `admin` | Semua fitur, termasuk manajemen pengguna |
+| `gudang` | Kelola produk & persediaan |
+| `supplier` | Kelola data supplier |
+| `kasir` | Catat penjualan dan pembelian; hanya-lihat untuk produk & supplier |
+| `keuangan` | Transaksi kas, arus kas, laba rugi, neraca |
 
-| Method | Path                 | Keterangan                      |
-|--------|----------------------|---------------------------------|
-| GET    | `/api/v1/users`      | Daftar pengguna (admin)         |
-| POST   | `/api/v1/users`      | Buat pengguna (admin)           |
-| PUT    | `/api/v1/users/{id}` | Ubah role / aktif-nonaktif      |
+## API
 
-## Modul Supplier
+Semua endpoint `/api/v1/*` (kecuali login) memerlukan sesi login dan dibatasi per role. Format respons seragam: `{ "success", "message", "data", "meta", "errors" }`.
 
-CRUD supplier (nama, kontak, telepon, email, kota, alamat, catatan, status aktif) dengan pencarian, filter status, dan pagination. Dikelola oleh role `supplier` dan `admin` (kasir hanya bisa melihat untuk form pembelian).
+| Modul | Endpoint |
+|---|---|
+| Auth | `POST /api/v1/auth/login` · `POST /api/v1/auth/logout` · `GET /api/v1/auth/me` |
+| Produk | `GET, POST /api/v1/products` · `GET, PUT, DELETE /api/v1/products/{id}` |
+| Supplier | `GET, POST /api/v1/suppliers` · `GET, PUT, DELETE /api/v1/suppliers/{id}` |
+| Pembelian | `GET, POST /api/v1/purchases` · `GET /{id}` · `POST /{id}/receive` · `POST /{id}/cancel` |
+| Penjualan | `GET, POST /api/v1/sales` · `GET /{id}` · `POST /{id}/cancel` |
+| Keuangan | `GET, POST /api/v1/finance/transactions` · `DELETE /{id}` · `GET /api/v1/finance/reports?from=&to=` |
+| Pengguna | `GET, POST /api/v1/users` · `PUT /api/v1/users/{id}` (admin) |
 
-| Method | Path                      | Keterangan                                   |
-|--------|---------------------------|----------------------------------------------|
-| GET    | `/api/v1/suppliers`       | Daftar (`page`, `limit`, `search`, `status`) |
-| GET    | `/api/v1/suppliers/{id}`  | Detail                                       |
-| POST   | `/api/v1/suppliers`       | Tambah                                       |
-| PUT    | `/api/v1/suppliers/{id}`  | Ubah                                         |
-| DELETE | `/api/v1/suppliers/{id}`  | Hapus (admin)                                |
+Daftar `GET` mendukung `page`, `limit`, dan (sesuai modul) `search` / `status`. Contoh siap pakai tersedia di `api.http`.
 
-## Modul Pembelian
+## Integrasi n8n & WhatsApp
 
-Pembelian barang ke supplier (satu pembelian bisa berisi banyak produk). Status: **Menunggu** → **Diterima** (stok produk otomatis bertambah dalam satu transaksi database) atau **Dibatalkan**. Dikelola oleh role `kasir` dan `admin`. Supplier/produk yang sudah punya riwayat pembelian tidak bisa dihapus (supplier cukup dinonaktifkan).
-
-| Method | Path                             | Keterangan                         |
-|--------|----------------------------------|------------------------------------|
-| GET    | `/api/v1/purchases`              | Daftar (`page`, `limit`, `status`) |
-| GET    | `/api/v1/purchases/{id}`         | Detail + item                      |
-| POST   | `/api/v1/purchases`              | Buat pembelian                     |
-| POST   | `/api/v1/purchases/{id}/receive` | Terima barang, tambah stok         |
-| POST   | `/api/v1/purchases/{id}/cancel`  | Batalkan                           |
-
-## Modul Penjualan
-
-Kasir mencatat penjualan (banyak produk per transaksi, metode tunai/transfer/QRIS). Dalam satu transaksi database: stok produk berkurang, penjualan tersimpan, dan kas masuk "Penjualan" tercatat otomatis di Keuangan. Harga diambil dari database (bukan dari klien) dan stok yang tidak cukup ditolak. Penjualan bisa **dibatalkan**: stok dikembalikan dan kas masuknya dihapus. Dikelola oleh role `kasir` dan `admin`.
-
-| Method | Path                         | Keterangan                       |
-|--------|------------------------------|----------------------------------|
-| GET    | `/api/v1/sales`              | Daftar (`page`, `limit`, `status`) |
-| GET    | `/api/v1/sales/{id}`         | Detail + item                    |
-| POST   | `/api/v1/sales`              | Catat penjualan, kurangi stok    |
-| POST   | `/api/v1/sales/{id}/cancel`  | Batalkan, kembalikan stok        |
-
-## Modul Keuangan
-
-Menu **Keuangan** (role `keuangan` dan `admin`) berisi tiga laporan dengan filter tanggal:
-
-- **Arus kas** – saldo awal/akhir, kas dari operasi & pendanaan, dan daftar transaksi.
-- **Laba rugi** – pendapatan dikurangi beban pada periode terpilih.
-- **Neraca** – aset (kas + persediaan) = liabilitas + ekuitas, per tanggal "sampai".
-
-Transaksi kas dicatat manual (kas masuk: Penjualan, Pendapatan lain, Modal, Pinjaman; kas keluar: Gaji, Operasional, Beban lain, Pembayaran pinjaman, Prive). Saat pembelian **diterima**, kas keluar "Pembelian barang" tercatat otomatis (dianggap dibayar tunai) dan tidak bisa dihapus manual. Pembelian barang tidak dihitung sebagai beban, melainkan menambah persediaan.
-
-Catatan penyederhanaan: persediaan di neraca dihitung dari harga jual × stok saat ini, dan selisihnya terhadap total pembelian muncul sebagai "Selisih penilaian persediaan" di ekuitas.
-
-| Method | Path                                    | Keterangan                          |
-|--------|-----------------------------------------|-------------------------------------|
-| GET    | `/api/v1/finance/reports?from=&to=`     | Arus kas, laba rugi, neraca         |
-| GET    | `/api/v1/finance/transactions`          | Daftar transaksi (`from`, `to`, `page`, `limit`) |
-| POST   | `/api/v1/finance/transactions`          | Catat transaksi kas                 |
-| DELETE | `/api/v1/finance/transactions/{id}`     | Hapus transaksi manual              |
-
-## Menjalankan Test
+Aplikasi dapat menghubungkan proses bisnis ke WhatsApp melalui [n8n](https://n8n.io) dan gateway WhatsApp (mis. Fonnte). Integrasi bersifat opsional dan tidak memengaruhi fungsi utama.
 
 ```
-go test ./...
+Aplikasi ──webhook sale.created──▶ n8n ──▶ WhatsApp gateway ──▶ WhatsApp
+Aplikasi ◀──/api/integration (API key)── n8n (terjadwal / pesan masuk)
 ```
 
-## Ide Pengembangan Berikutnya
+**Endpoint integrasi** (hanya-baca, autentikasi header `X-API-Key`):
 
-- Autentikasi JWT + tabel `users`
-- Dockerfile untuk men-deploy API
+| Endpoint | Fungsi |
+|---|---|
+| `GET /api/integration/summary?date=` | Ringkasan harian: omzet, jumlah transaksi, kas masuk/keluar |
+| `GET /api/integration/low-stock?threshold=` | Produk dengan stok di bawah batas |
+| `GET /api/integration/stock?q=` | Pencarian stok produk |
+
+**Event keluar:** `sale.created` dikirim (POST JSON, header opsional `X-Webhook-Secret`) ke `SALE_WEBHOOK_URL` setiap penjualan tercatat, berisi nomor invoice, pelanggan, daftar barang, dan total.
+
+**Workflow n8n** (folder `n8n/`, import langsung dari UI n8n):
+
+| Berkas | Fungsi |
+|---|---|
+| `1-notif-penjualan.json` | Kirim notifikasi WhatsApp untuk setiap penjualan baru |
+| `2-laporan-harian.json` | Laporan harian terjadwal dan peringatan stok menipis |
+| `3-bot-cek-stok.json` | Balas pesan `stok <nama produk>` dengan ketersediaan stok |
+
+Workflow membaca konfigurasi dari environment n8n: `APP_URL`, `INTEGRATION_API_KEY`, `OWNER_WA`, `FONNTE_TOKEN`. n8n dapat dijalankan lewat `docker compose --profile automation up -d` atau `npx n8n`.
+
+## Catatan Teknis
+
+- Harga penjualan diambil dari database (bukan dari klien); stok tidak cukup ditolak.
+- Penjualan dan pembelian dieksekusi dalam satu transaksi database.
+- Neraca menyederhanakan penilaian persediaan (harga jual × stok); selisihnya terhadap total pembelian ditampilkan sebagai "Selisih penilaian persediaan" pada ekuitas.
+
+## Rencana Pengembangan
+
+- Dockerfile untuk deployment
 - Test integrasi dengan database sungguhan
-- Dokumentasi Swagger/OpenAPI
+- Dokumentasi OpenAPI/Swagger
+- Pembatasan percobaan login (rate limiting)
+- Ekspor laporan ke Excel/PDF
