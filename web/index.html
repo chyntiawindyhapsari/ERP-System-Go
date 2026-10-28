@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERP Mini</title>
 <script>
-  // Terapkan tema sebelum render agar tidak berkedip.
   (function () {
     try {
       var t = localStorage.getItem('theme');
@@ -127,8 +126,6 @@
     outline-offset: 2px;
   }
 
-  /* ---------- Buttons ---------- */
-
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     cursor: pointer;
@@ -164,8 +161,6 @@
   }
   .icon-btn:hover { background: var(--sunken); color: var(--ink); }
 
-  /* ---------- Fields ---------- */
-
   label.field { display: grid; gap: 6px; font-size: .82rem; font-weight: 500; color: var(--ink-2); }
 
   .input {
@@ -191,8 +186,6 @@
     color: var(--ink-3); font-size: .78rem; padding: 6px 8px; border-radius: 6px;
   }
   .pw-toggle:hover { color: var(--ink); }
-
-  /* ---------- Login ---------- */
 
   .login-screen {
     min-height: 100vh;
