@@ -1,0 +1,64 @@
+{
+  "name": "1 - Notif penjualan baru ke WA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "penjualan-baru",
+        "options": {}
+      },
+      "name": "Webhook penjualan",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3c332568-28f1-40e0-8aae-870716f0babe",
+      "webhookId": "b0f7b71c-9e68-474e-a62a-e23ae3898ec4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fonnte.com/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $env.FONNTE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({target: $env.OWNER_WA, message: $json.body.data.text}) }}"
+      },
+      "name": "Kirim WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "f0f84e96-4f02-4ad2-9ae4-b6dc313d0804"
+    }
+  ],
+  "connections": {
+    "Webhook penjualan": {
+      "main": [
+        [
+          {
+            "node": "Kirim WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

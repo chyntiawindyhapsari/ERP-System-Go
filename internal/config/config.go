@@ -1,4 +1,3 @@
-
 package config
 
 import (
@@ -20,6 +19,10 @@ type Config struct {
 	AdminUsername string
 	AdminPassword string
 	AdminFullName string
+
+	IntegrationAPIKey string // kunci untuk n8n/WA membaca data
+	WebhookURL        string // tujuan event keluar (webhook n8n)
+	WebhookSecret     string
 }
 
 func Load() *Config {
@@ -36,6 +39,10 @@ func Load() *Config {
 		AdminUsername: getEnv("ADMIN_USERNAME", ""),
 		AdminPassword: getEnv("ADMIN_PASSWORD", ""),
 		AdminFullName: getEnv("ADMIN_FULL_NAME", "Administrator"),
+
+		IntegrationAPIKey: getEnv("INTEGRATION_API_KEY", ""),
+		WebhookURL:        getEnv("SALE_WEBHOOK_URL", ""),
+		WebhookSecret:     getEnv("SALE_WEBHOOK_SECRET", ""),
 	}
 }
 

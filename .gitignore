@@ -29,3 +29,10 @@ first-project/
 .vscode/
 .idea/
 .DS_Store
+
+# Hasil build air & log
+tmp/
+*.log
+
+# Data lokal n8n 
+.n8n/

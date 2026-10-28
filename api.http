@@ -142,3 +142,15 @@ GET http://localhost:8080/api/v1/sales?status=completed
 
 ### Batalkan (stok kembali, kas masuk dihapus)
 POST http://localhost:8080/api/v1/sales/1/cancel
+
+### --- Integrasi n8n / WA (pakai API key, tanpa login) ---
+GET http://localhost:8080/api/integration/summary
+X-API-Key: ISI_API_KEY_KAMU
+
+###
+GET http://localhost:8080/api/integration/low-stock?threshold=5
+X-API-Key: ISI_API_KEY_KAMU
+
+###
+GET http://localhost:8080/api/integration/stock?q=mouse
+X-API-Key: ISI_API_KEY_KAMU

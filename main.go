@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -14,6 +13,7 @@ import (
 	"first-project/internal/config"
 	"first-project/internal/database"
 	"first-project/internal/handler"
+	"first-project/internal/notify"
 	"first-project/internal/repository"
 	"first-project/internal/router"
 	"first-project/internal/service"
@@ -52,7 +52,7 @@ func main() {
 
 	productRepo := repository.NewProductRepository(pool)
 	productSvc := service.NewProductService(productRepo)
-	appHandler := router.New(pool, productSvc)
+	appHandler := router.New(pool, productSvc, notify.New(cfg.WebhookURL, cfg.WebhookSecret), cfg.IntegrationAPIKey)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.AppPort,

@@ -11,17 +11,19 @@ import (
 	"time"
 
 	"first-project/internal/middleware"
+	"first-project/internal/notify"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SaleHandler struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
+	notifier *notify.Notifier
 }
 
-func NewSaleHandler(pool *pgxpool.Pool) *SaleHandler {
-	return &SaleHandler{pool: pool}
+func NewSaleHandler(pool *pgxpool.Pool, n *notify.Notifier) *SaleHandler {
+	return &SaleHandler{pool: pool, notifier: n}
 }
 
 // Hak akses (dijaga di router): admin & kasir.
@@ -280,6 +282,14 @@ func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s, _ := h.load(ctx, id)
+	if s != nil {
+		h.notifier.Send("sale.created", map[string]any{
+			"invoice": fmt.Sprintf("INV-%04d", s.ID), "customer": s.CustomerName,
+			"payment_method": s.PaymentMethod, "total": s.Total, "item_count": s.ItemCount,
+			"items": s.Items,
+			"text":  saleNotifText(s),
+		})
+	}
 	writeJSON(w, http.StatusCreated, Response{Success: true, Message: "penjualan berhasil dicatat", Data: s})
 }
 
@@ -331,4 +341,20 @@ func (h *SaleHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, Response{Success: true, Message: "penjualan dibatalkan, stok dikembalikan"})
+}
+
+// saleNotifText menyusun isi pesan WhatsApp untuk penjualan baru, lengkap dengan daftar barang.
+func saleNotifText(s *sale) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Penjualan baru INV-%04d\n", s.ID)
+	if s.CustomerName != "" {
+		fmt.Fprintf(&b, "Pelanggan: %s\n", s.CustomerName)
+	}
+	b.WriteString("\nBarang:\n")
+	for _, it := range s.Items {
+		fmt.Fprintf(&b, "- %s x%d @ Rp %s = Rp %s\n",
+			it.ProductName, it.Quantity, rupiah(it.UnitPrice), rupiah(int64(it.Quantity)*it.UnitPrice))
+	}
+	fmt.Fprintf(&b, "\nTotal: Rp %s (%s)", rupiah(s.Total), s.PaymentMethod)
+	return b.String()
 }

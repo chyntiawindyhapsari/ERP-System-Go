@@ -1,0 +1,151 @@
+{
+  "name": "3 - Bot cek stok via WA (ketik: stok mouse)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wa-masuk",
+        "options": {}
+      },
+      "name": "Pesan WA masuk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "42ef7487-c9bb-480f-8ea7-b11b310a844a",
+      "webhookId": "888e4449-3182-44a7-9abc-4e63244c65ad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ (($json.body.message || '').toLowerCase().startsWith('stok ')) && String($json.body.sender) === $env.OWNER_WA }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Dari owner & diawali 'stok'?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "a7881338-be11-4739-84bd-95fb2187c041"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APP_URL }}/api/integration/stock",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.INTEGRATION_API_KEY }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $('Pesan WA masuk').item.json.body.message.slice(5).trim() }}"
+            }
+          ]
+        }
+      },
+      "name": "Cari stok",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "id": "dd9dd057-0cd0-4c13-85de-0d66f36d5cb5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fonnte.com/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $env.FONNTE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({target: $env.OWNER_WA, message: $json.data.text}) }}"
+      },
+      "name": "Balas WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        0
+      ],
+      "id": "c4b34470-9c35-4cd9-b35a-e59f08177e2c"
+    }
+  ],
+  "connections": {
+    "Pesan WA masuk": {
+      "main": [
+        [
+          {
+            "node": "Dari owner & diawali 'stok'?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dari owner & diawali 'stok'?": {
+      "main": [
+        [
+          {
+            "node": "Cari stok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Cari stok": {
+      "main": [
+        [
+          {
+            "node": "Balas WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

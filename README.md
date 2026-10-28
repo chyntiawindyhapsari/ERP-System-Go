@@ -15,6 +15,15 @@ REST API manajemen produk dengan operasi CRUD lengkap, dibuat sebagai project po
 - Unit test untuk service (tanpa perlu database)
 - Hanya 2 dependency: `pgx` (driver PostgreSQL) dan `godotenv`
 
+## Integrasi n8n & WhatsApp (baru)
+
+- Notifikasi WA tiap penjualan baru, laporan harian jam 20:00, peringatan stok menipis
+- Bot WA (Fonnte): kirim `stok mouse` → dibalas sisa stok
+- Endpoint read-only `/api/integration/*` (API key) + webhook `sale.created`
+- Workflow n8n siap import di folder `n8n/`
+
+Panduan lengkap step by step: [PANDUAN-n8n-WA.md](PANDUAN-n8n-WA.md)
+
 ## Tech Stack
 
 Go 1.22+ · `net/http` (standard library) · PostgreSQL 16 · pgx v5 · Docker

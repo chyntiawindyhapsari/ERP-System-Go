@@ -1,4 +1,3 @@
-
 package router
 
 import (
@@ -9,13 +8,14 @@ import (
 
 	"first-project/internal/handler"
 	"first-project/internal/middleware"
+	"first-project/internal/notify"
 	"first-project/internal/service"
 	"first-project/web"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
+func New(pool *pgxpool.Pool, productSvc *service.ProductService, n *notify.Notifier, integrationKey string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +40,9 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 	authHandler := handler.NewAuthHandler(pool)
 	authHandler.Register(mux)
 
+	// Endpoint untuk n8n / WhatsApp (pakai API key, bukan cookie login).
+	handler.NewIntegrationHandler(pool, integrationKey).Register(mux)
+
 	protectedAPI := http.NewServeMux()
 	handler.NewProductHandler(productSvc).Register(protectedAPI)
 
@@ -47,7 +50,7 @@ func New(pool *pgxpool.Pool, productSvc *service.ProductService) http.Handler {
 	handler.NewSupplierHandler(pool).Register(protectedAPI)
 	handler.NewPurchaseHandler(pool).Register(protectedAPI)
 	handler.NewFinanceHandler(pool).Register(protectedAPI)
-	handler.NewSaleHandler(pool).Register(protectedAPI)
+	handler.NewSaleHandler(pool, n).Register(protectedAPI)
 
 	// Hak akses per role (admin selalu boleh semuanya):
 	//  - produk (& persediaan): gudang kelola penuh; kasir hanya lihat (untuk form pembelian)
